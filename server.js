@@ -11,14 +11,14 @@ let peopleAtGymCount = 0;
 let lastCheckInTime = 0;
 
 // Define the path to your static files directory
-const publicPath = path.join(__dirname, 'public');
+const publicPath = path.join(__dirname, 'Public'); // Use 'Public' with a capital 'P'
 
-// Serve static files from the "public" directory
+// Serve static files from the "Public" directory
 app.use(express.static(publicPath));
 
 // Route handler for the root URL ("/")
 app.get('/', (req, res) => {
-    // Use path.join to ensure correct path to 'index.html'
+    // Use path.join to ensure the correct path to 'index.html'
     const indexPath = path.join(publicPath, 'index.html');
     res.sendFile(indexPath);
 });
