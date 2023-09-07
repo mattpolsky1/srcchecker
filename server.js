@@ -9,7 +9,13 @@ const io = socketIO(server);
 let peopleAtGymCount = 0;
 let lastCheckInTime = 0;
 
+// Serve static files from the "public" directory
 app.use(express.static(__dirname + '/public'));
+
+// Route handler for the root URL ("/")
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/public/index.html');
+});
 
 function updatePeopleCount() {
     const currentTime = Date.now();
@@ -44,3 +50,4 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
