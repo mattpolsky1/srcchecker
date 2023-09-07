@@ -38,6 +38,9 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(8080, () => {
-    console.log('Server is running on port 8080');
+// Use the process.env.PORT variable provided by Heroku
+const PORT = process.env.PORT || 8080;
+
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
