@@ -19,7 +19,8 @@ app.use(express.static(publicPath));
 // Route handler for the root URL ("/")
 app.get('/', (req, res) => {
     // Use path.join to ensure correct path to 'index.html'
-    res.sendFile(path.join(publicPath, 'index.html'));
+    const indexPath = path.join(publicPath, 'index.html');
+    res.sendFile(indexPath);
 });
 
 function updatePeopleCount() {
