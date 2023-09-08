@@ -101,7 +101,7 @@
                     canCheckIn = true;
                     localStorage.removeItem(localStorageKey);
                     updateStatus("Checked Out");
-                    socket.emit('checkOut');
+                    socket.emit('checkOut'); // Emit the 'checkOut' event
                 }
             }, 30 * 1000); // 30 seconds
         }
@@ -110,7 +110,7 @@
             if (canCheckIn) {
                 peopleAtGymCount++;
                 updateCount(peopleAtGymCount);
-                socket.emit('checkIn', peopleAtGymCount);
+                socket.emit('checkIn', peopleAtGymCount); // Emit the 'checkIn' event
                 canCheckIn = false;
                 localStorage.setItem(localStorageKey, "checkedIn");
                 updateStatus("Checked In");
@@ -127,4 +127,5 @@
     </script>
 </body>
 </html>
+
 
