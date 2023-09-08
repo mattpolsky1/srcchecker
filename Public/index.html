@@ -117,11 +117,7 @@
         });
 
         checkOutButton.addEventListener("click", () => {
-            if (!canCheckIn) { // Only allow checking out if not in the countdown phase
-                socket.emit('checkOut');
-                setCheckInButton();
-                localStorage.removeItem(localStorageKey); // Remove check-in status
-            }
+            socket.emit('checkOut');
         });
 
         socket.on('updateCount', (count) => {
@@ -130,6 +126,7 @@
     </script>
 </body>
 </html>
+
 
 
 
