@@ -65,6 +65,16 @@
 
         function updateCount(count) {
             peopleAtGymElement.textContent = count;
+
+            if (count == 0) {
+                peopleAtGymeElement.textContent += "The gym is empty" // says there is nobody at the gym if it is empty
+            }
+            else if (count < 25) {
+                peopleAtGymElement.textContent += "It's not packed" // not many people
+            }
+            else {
+            peopleAtGymElement.textContent += "The gym is packed!" //the gym hella packed
+            }
         }
 
         // Check local storage for previous check-in status
