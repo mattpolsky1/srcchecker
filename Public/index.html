@@ -90,7 +90,6 @@
         if (previousCheckInStatus === "checkedIn") {
             canCheckIn = false;
             updateStatus("Checked In");
-            startCountdown();
         }
 
         function startCountdown() {
@@ -108,12 +107,10 @@
 
         checkInButton.addEventListener("click", () => {
             if (canCheckIn) {
-                peopleAtGymCount++;
-                updateCount(peopleAtGymCount);
-                socket.emit('checkIn', peopleAtGymCount); // Emit the 'checkIn' event
                 canCheckIn = false;
                 localStorage.setItem(localStorageKey, "checkedIn");
                 updateStatus("Checked In");
+                socket.emit('checkIn'); // Emit the 'checkIn' event
                 startCountdown();
             } else {
                 alert("You can only Check In once every 30 seconds.");
@@ -127,5 +124,6 @@
     </script>
 </body>
 </html>
+
 
 
