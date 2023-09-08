@@ -7,7 +7,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-let peopleAtGymCount = 0;
+let totalCheckIns = 0;
 let lastCheckInTime = 0;
 
 // Define the path to your static files directory
@@ -27,26 +27,21 @@ function updatePeopleCount() {
     const currentTime = Date.now();
     if (currentTime - lastCheckInTime >= 8 * 60 * 60 * 1000) {
         lastCheckInTime = currentTime;
-        peopleAtGymCount = 0;
+        totalCheckIns = 0;
     }
 }
 
 io.on('connection', (socket) => {
-    socket.emit('updateCount', peopleAtGymCount);
+    socket.emit('updateCount', totalCheckIns);
 
     socket.on('checkIn', () => {
         updatePeopleCount();
-        if (peopleAtGymCount === 0) {
-            peopleAtGymCount++;
-            io.emit('updateCount', peopleAtGymCount);
-        }
+        totalCheckIns++; // Increase the total check-ins count
+        io.emit('updateCount', totalCheckIns); // Broadcast the updated count to all clients
     });
 
-    socket.on('checkOut', () => {
-        if (peopleAtGymCount > 0) {
-            peopleAtGymCount--;
-            io.emit('updateCount', peopleAtGymCount);
-        }
+    socket.on('disconnect', () => {
+        // Handle disconnections if needed
     });
 });
 
@@ -57,3 +52,4 @@ server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
+updatePeopleCount(); // Initialize the lastCheckInTime and totalCheckIns
