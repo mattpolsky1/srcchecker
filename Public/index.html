@@ -101,7 +101,7 @@
                     socket.emit('checkOut'); // Emit the 'checkOut' event to decrease count
                     socket.emit('checkIn'); // Emit the 'checkIn' event to increase count
                 }
-            }, 10 * 1000); // 10 seconds
+            }, 5400000); // 90 minutes
         }
 
         checkInButton.addEventListener("click", () => {
