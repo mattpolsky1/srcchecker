@@ -28,6 +28,12 @@
             color: #007BFF;
         }
 
+        #status {
+            font-size: 24px;
+            font-weight: bold;
+            color: #555;
+        }
+
         button.checkIn {
             font-size: 36px;
             font-weight: bold;
@@ -55,6 +61,7 @@
 </head>
 <body>
     <h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
+    <div id="status">Status: Checked Out</div>
     <button id="checkInButton" class="checkIn">Check In</button>
     <div id="logo">CampusHoops &copy; 2023</div>
 
@@ -62,6 +69,7 @@
     <script>
         const peopleAtGymElement = document.getElementById("peopleAtGym");
         const checkInButton = document.getElementById("checkInButton");
+        const statusElement = document.getElementById("status");
 
         const socket = io();
 
@@ -73,10 +81,15 @@
             peopleAtGymElement.textContent = count;
         }
 
+        function updateStatus(status) {
+            statusElement.textContent = `Status: ${status}`;
+        }
+
         // Check local storage for previous check-in status
         const previousCheckInStatus = localStorage.getItem(localStorageKey);
         if (previousCheckInStatus === "checkedIn") {
             canCheckIn = false;
+            updateStatus("Checked In");
             startCountdown();
         }
 
@@ -87,8 +100,9 @@
                     updateCount(peopleAtGymCount);
                     canCheckIn = true;
                     localStorage.removeItem(localStorageKey);
+                    updateStatus("Checked Out");
                 }
-            }, 2 * 60 * 1000); // 2 minutes
+            }, 30 * 1000); // 30 seconds
         }
 
         checkInButton.addEventListener("click", () => {
@@ -98,9 +112,10 @@
                 socket.emit('checkIn');
                 canCheckIn = false;
                 localStorage.setItem(localStorageKey, "checkedIn");
+                updateStatus("Checked In");
                 startCountdown();
             } else {
-                alert("You can only Check In once every 2 minutes.");
+                alert("You can only Check In once every 30 seconds.");
             }
         });
 
@@ -111,6 +126,7 @@
     </script>
 </body>
 </html>
+
 
 
 
