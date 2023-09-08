@@ -39,11 +39,13 @@ io.on('connection', (socket) => {
         io.emit('updateCount', totalCheckIns);
     });
 
-    socket.on('disconnect', () => {
-        // Handle disconnections if needed
+    socket.on('checkOut', () => {
+        if (totalCheckIns > 0) {
+            totalCheckIns--;
+            io.emit('updateCount', totalCheckIns);
+        }
     });
 });
-
 
 const PORT = process.env.PORT || 8080;
 

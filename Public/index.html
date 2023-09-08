@@ -94,10 +94,13 @@
 
         function startCountdown() {
             setTimeout(() => {
-                checkedIn = false; // Automatically check out after 10 seconds
-                localStorage.removeItem(localStorageKey);
-                updateStatus("Checked Out");
-                socket.emit('checkOut'); // Emit the 'checkOut' event
+                if (checkedIn) {
+                    checkedIn = false; // Automatically check out after 10 seconds
+                    localStorage.removeItem(localStorageKey);
+                    updateStatus("Checked Out");
+                    socket.emit('checkOut'); // Emit the 'checkOut' event to decrease count
+                    socket.emit('checkIn'); // Emit the 'checkIn' event to increase count
+                }
             }, 10 * 1000); // 10 seconds
         }
 
@@ -106,7 +109,7 @@
                 checkedIn = true; // User checks in
                 localStorage.setItem(localStorageKey, "checkedIn");
                 updateStatus("Checked In");
-                socket.emit('checkIn'); // Emit the 'checkIn' event
+                socket.emit('checkIn'); // Emit the 'checkIn' event to increase count
                 startCountdown();
             } else {
                 alert("You are already checked in.");
@@ -118,14 +121,16 @@
         });
 
         socket.on('checkOut', () => {
-            checkedIn = false; // User checks out
-            localStorage.removeItem(localStorageKey);
-            updateStatus("Checked Out");
+            if (checkedIn) {
+                checkedIn = false; // User checks out
+                localStorage.removeItem(localStorageKey);
+                updateStatus("Checked Out");
+            }
         });
-        
     </script>
 </body>
 </html>
+
 
 
 
