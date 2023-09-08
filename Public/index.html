@@ -65,7 +65,8 @@
 
         const socket = io();
 
-        let canCheckIn = true; // Initially, users can check in
+        let peopleAtGymCount = 0;
+        let canCheckIn = true;
         const localStorageKey = "checkInStatus";
 
         function updateCount(count) {
@@ -81,16 +82,22 @@
 
         function startCountdown() {
             setTimeout(() => {
-                canCheckIn = true; // Allow checking in again after 2 minutes
-                socket.emit('checkOut'); // Automatically check out after 2 minutes
+                if (!canCheckIn) {
+                    peopleAtGymCount--;
+                    updateCount(peopleAtGymCount);
+                    canCheckIn = true;
+                    localStorage.removeItem(localStorageKey);
+                }
             }, 2 * 60 * 1000); // 2 minutes
         }
 
         checkInButton.addEventListener("click", () => {
             if (canCheckIn) {
+                peopleAtGymCount++;
+                updateCount(peopleAtGymCount);
                 socket.emit('checkIn');
-                canCheckIn = false; // Disable checking in
-                localStorage.setItem(localStorageKey, "checkedIn"); // Store check-in status
+                canCheckIn = false;
+                localStorage.setItem(localStorageKey, "checkedIn");
                 startCountdown();
             } else {
                 alert("You can only Check In once every 2 minutes.");
@@ -98,11 +105,13 @@
         });
 
         socket.on('updateCount', (count) => {
-            updateCount(count);
+            peopleAtGymCount = count;
+            updateCount(peopleAtGymCount);
         });
     </script>
 </body>
 </html>
+
 
 
 
