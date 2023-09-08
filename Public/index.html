@@ -52,9 +52,17 @@
 
         #logo {
             position: absolute;
-            bottom: 10px;
+            top: 10px;
             left: 10px;
             font-size: 14px;
+        }
+
+        #uncLogo {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 100px;
+            height: 100px;
         }
     </style>
 </head>
@@ -63,6 +71,7 @@
     <button id="checkInButton" class="checkIn">Check In</button>
     <button id="checkOutButton" class="checkOut">Check Out</button>
     <div id="logo">CampusHoops &copy; 2023</div>
+    <img id="uncLogo" src="unc_logo.png" alt="UNC Logo">
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -99,10 +108,10 @@
 
         function startCountdown() {
             setTimeout(() => {
-                canCheckIn = true; // Allow checking in again after 90 minutes
+                canCheckIn = true; // Allow checking in again after 2 minutes (for testing)
                 setCheckInButton();
-                socket.emit('checkOut'); // Automatically check out after 90 minutes
-            }, 90 * 60 * 1000);
+                socket.emit('checkOut'); // Automatically check out after 2 minutes (for testing)
+            }, 2 * 60 * 1000); // Change back to 90 * 60 * 1000 for 90 minutes
         }
 
         checkInButton.addEventListener("click", () => {
@@ -113,7 +122,7 @@
                 setCheckOutButton();
                 startCountdown();
             } else {
-                alert("You can only Check In once every 1 hour and 30 minutes.");
+                alert("You can only Check In once every 2 minutes (for testing purposes).");
             }
         });
 
@@ -129,5 +138,6 @@
     </script>
 </body>
 </html>
+
 
 
