@@ -89,7 +89,6 @@
         if (previousCheckInStatus === "checkedIn") {
             checkedIn = true; // User was previously checked in
             updateStatus("Checked In");
-            updateCount(1); // Initially, count as 1
             startCountdown();
         }
 
@@ -98,7 +97,6 @@
                 checkedIn = false; // Automatically check out after 10 seconds
                 localStorage.removeItem(localStorageKey);
                 updateStatus("Checked Out");
-                updateCount(0); // Update the count to 0
                 socket.emit('checkOut'); // Emit the 'checkOut' event
             }, 10 * 1000); // 10 seconds
         }
@@ -108,7 +106,6 @@
                 checkedIn = true; // User checks in
                 localStorage.setItem(localStorageKey, "checkedIn");
                 updateStatus("Checked In");
-                updateCount(1); // Update the count to 1
                 socket.emit('checkIn'); // Emit the 'checkIn' event
                 startCountdown();
             } else {
@@ -124,8 +121,8 @@
             checkedIn = false; // User checks out
             localStorage.removeItem(localStorageKey);
             updateStatus("Checked Out");
-            updateCount(0); // Update the count to 0
         });
+        
     </script>
 </body>
 </html>
