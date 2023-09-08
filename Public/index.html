@@ -61,12 +61,14 @@
 <body>
     <h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
     <button id="checkInButton" class="checkIn">Check In</button>
+    <button id="checkOutButton" class="checkOut">Check Out</button>
     <div id="logo">CampusHoops &copy; 2023</div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const peopleAtGymElement = document.getElementById("peopleAtGym");
         const checkInButton = document.getElementById("checkInButton");
+        const checkOutButton = document.getElementById("checkOutButton");
 
         const socket = io();
 
@@ -75,16 +77,6 @@
 
         function updateCount(count) {
             peopleAtGymElement.textContent = count;
-
-            if (count == 0) {
-                peopleAtGymeElement.textContent += "The gym is empty" // says there is nobody at the gym if it is empty
-            }
-            else if (count < 25) {
-                peopleAtGymElement.textContent += "It's not packed" // not many people
-            }
-            else {
-            peopleAtGymElement.textContent += "The gym is packed!" //the gym hella packed
-            }
         }
 
         // Check local storage for previous check-in status
@@ -96,15 +88,13 @@
         }
 
         function setCheckOutButton() {
-            checkInButton.classList.remove("checkIn");
-            checkInButton.classList.add("checkOut");
-            checkInButton.textContent = "Check Out";
+            checkInButton.style.display = "none"; // Hide Check In button
+            checkOutButton.style.display = "block"; // Show Check Out button
         }
 
         function setCheckInButton() {
-            checkInButton.classList.remove("checkOut");
-            checkInButton.classList.add("checkIn");
-            checkInButton.textContent = "Check In";
+            checkInButton.style.display = "block"; // Show Check In button
+            checkOutButton.style.display = "none"; // Hide Check Out button
         }
 
         function startCountdown() {
@@ -127,10 +117,17 @@
             }
         });
 
+        checkOutButton.addEventListener("click", () => {
+            socket.emit('checkOut');
+            setCheckInButton();
+            localStorage.removeItem(localStorageKey); // Remove check-in status
+        });
+
         socket.on('updateCount', (count) => {
             updateCount(count);
         });
     </script>
 </body>
 </html>
+
 
