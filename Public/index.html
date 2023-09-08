@@ -58,40 +58,28 @@
         const peopleAtGymElement = document.getElementById("peopleAtGym");
         const checkInButton = document.getElementById("checkInButton");
 
-        let peopleAtGymCount = 0;
+        
 
         const socket = io();
 
-        function updateCount() {
-            peopleAtGymElement.textContent = peopleAtGymCount;
+        function updateCount(count) {
+            peopleAtGymElement.textContent = count;
         }
 
+
         checkInButton.addEventListener("click", () => {
-            const currentTime = Date.now();
-            if (peopleAtGymCount === 0 || (currentTime - lastCheckInTime >= 90 * 60 * 1000)) {
-                peopleAtGymCount++;
-                lastCheckInTime = currentTime;
-                updateCount();
-                socket.emit('checkIn');
-            } else {
-                alert("You can only Check In once every 1 hour and 30 minutes.");
-            }
+            socket.emit('checkIn');
         });
 
-        updateCount();
+        
+
+
 
         socket.on('updateCount', (count) => {
-            peopleAtGymCount = count;
-            updateCount();
+            updateCount(count);
         });
 
-        // Automatically decrease count every 1 hour and 30 minutes
-        setInterval(() => {
-            if (peopleAtGymCount > 0) {
-                peopleAtGymCount--;
-                updateCount();
-            }
-        }, 90 * 60 * 1000);
+
     </script>
 </body>
 </html>
