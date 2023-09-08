@@ -90,19 +90,6 @@
             checkedInUsers.add(socket.id); // Add user to checked-in Set
             updateStatus("Checked In");
             updateCount(checkedInUsers.size);
-            startCountdown();
-        }
-
-        function startCountdown() {
-            setTimeout(() => {
-                if (checkedInUsers.has(socket.id)) {
-                    checkedInUsers.delete(socket.id); // Remove user from checked-in Set
-                    localStorage.removeItem(localStorageKey);
-                    updateStatus("Checked Out");
-                    socket.emit('checkOut'); // Emit the 'checkOut' event
-                    updateCount(checkedInUsers.size);
-                }
-            }, 10 * 1000); // 10 seconds
         }
 
         checkInButton.addEventListener("click", () => {
@@ -112,7 +99,6 @@
                 updateStatus("Checked In");
                 socket.emit('checkIn'); // Emit the 'checkIn' event
                 updateCount(checkedInUsers.size);
-                startCountdown();
             } else {
                 alert("You are already checked in.");
             }
@@ -133,6 +119,7 @@
     </script>
 </body>
 </html>
+
 
 
 
