@@ -73,8 +73,7 @@
 
         const socket = io();
 
-        let peopleAtGymCount = 0;
-        let canCheckIn = true;
+        let checkedInUsers = new Set(); // Maintain a Set of checked-in users
         const localStorageKey = "checkInStatus";
 
         function updateCount(count) {
@@ -88,42 +87,40 @@
         // Check local storage for previous check-in status
         const previousCheckInStatus = localStorage.getItem(localStorageKey);
         if (previousCheckInStatus === "checkedIn") {
-            canCheckIn = false;
+            checkedInUsers.add(socket.id); // Add user to checked-in Set
             updateStatus("Checked In");
-        }
-
-        function startCountdown() {
-            setTimeout(() => {
-                if (!canCheckIn) {
-                    peopleAtGymCount--;
-                    updateCount(peopleAtGymCount);
-                    canCheckIn = true;
-                    localStorage.removeItem(localStorageKey);
-                    updateStatus("Checked Out");
-                    socket.emit('checkOut'); // Emit the 'checkOut' event
-                }
-            }, 30 * 1000); // 30 seconds
+            updateCount(checkedInUsers.size);
         }
 
         checkInButton.addEventListener("click", () => {
-            if (canCheckIn) {
-                canCheckIn = false;
+            if (!checkedInUsers.has(socket.id)) {
+                checkedInUsers.add(socket.id); // Add user to checked-in Set
                 localStorage.setItem(localStorageKey, "checkedIn");
                 updateStatus("Checked In");
                 socket.emit('checkIn'); // Emit the 'checkIn' event
-                startCountdown();
+                updateCount(checkedInUsers.size);
             } else {
-                alert("You can only Check In once every 30 seconds.");
+                alert("You are already checked in.");
             }
         });
 
         socket.on('updateCount', (count) => {
-            peopleAtGymCount = count;
-            updateCount(peopleAtGymCount);
+            updateCount(count);
+        });
+
+        socket.on('checkOut', () => {
+            if (checkedInUsers.has(socket.id)) {
+                checkedInUsers.delete(socket.id); // Remove user from checked-in Set
+                localStorage.removeItem(localStorageKey);
+                updateStatus("Checked Out");
+                socket.emit('checkOut'); // Emit the 'checkOut' event
+                updateCount(checkedInUsers.size);
+            }
         });
     </script>
 </body>
 </html>
+
 
 
 
