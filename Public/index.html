@@ -28,7 +28,7 @@
             color: #007BFF;
         }
 
-        button.checkIn, button.checkOut {
+        button.checkIn {
             font-size: 36px;
             font-weight: bold;
             padding: 20px 40px;
@@ -38,10 +38,6 @@
             cursor: pointer;
             margin-top: 30px;
             display: block;
-        }
-
-        button.checkOut {
-            background-color: #ff0000;
         }
 
         button:hover {
@@ -60,14 +56,12 @@
 <body>
     <h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
     <button id="checkInButton" class="checkIn">Check In</button>
-    <button id="checkOutButton" class="checkOut">Check Out</button>
     <div id="logo">CampusHoops &copy; 2023</div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const peopleAtGymElement = document.getElementById("peopleAtGym");
         const checkInButton = document.getElementById("checkInButton");
-        const checkOutButton = document.getElementById("checkOutButton");
 
         const socket = io();
 
@@ -82,26 +76,14 @@
         const previousCheckInStatus = localStorage.getItem(localStorageKey);
         if (previousCheckInStatus === "checkedIn") {
             canCheckIn = false;
-            setCheckOutButton();
             startCountdown();
-        }
-
-        function setCheckOutButton() {
-            checkInButton.style.display = "none"; // Hide Check In button
-            checkOutButton.style.display = "block"; // Show Check Out button
-        }
-
-        function setCheckInButton() {
-            checkInButton.style.display = "block"; // Show Check In button
-            checkOutButton.style.display = "none"; // Hide Check Out button
         }
 
         function startCountdown() {
             setTimeout(() => {
-                canCheckIn = true; // Allow checking in again after 2 minutes (for testing)
-                setCheckInButton();
-                socket.emit('checkOut'); // Automatically check out after 2 minutes (for testing)
-            }, 2 * 60 * 1000); // Change back to 90 * 60 * 1000 for 90 minutes
+                canCheckIn = true; // Allow checking in again after 2 minutes
+                socket.emit('checkOut'); // Automatically check out after 2 minutes
+            }, 2 * 60 * 1000); // 2 minutes
         }
 
         checkInButton.addEventListener("click", () => {
@@ -109,15 +91,10 @@
                 socket.emit('checkIn');
                 canCheckIn = false; // Disable checking in
                 localStorage.setItem(localStorageKey, "checkedIn"); // Store check-in status
-                setCheckOutButton();
                 startCountdown();
             } else {
-                alert("You can only Check In once every 2 minutes (for testing purposes).");
+                alert("You can only Check In once every 2 minutes.");
             }
-        });
-
-        checkOutButton.addEventListener("click", () => {
-            socket.emit('checkOut');
         });
 
         socket.on('updateCount', (count) => {
@@ -126,6 +103,7 @@
     </script>
 </body>
 </html>
+
 
 
 
