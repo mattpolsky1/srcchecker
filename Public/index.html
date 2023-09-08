@@ -4,7 +4,7 @@
     <title>Gym Attendance</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Gotham Bold', Arial, sans-serif;
             background-color: #f4f4f4;
             text-align: center;
             padding: 0;
@@ -18,32 +18,30 @@
 
         h1 {
             font-size: 72px;
+            font-weight: bold;
             color: #333;
         }
 
         #peopleAtGym {
             font-size: 96px;
+            font-weight: bold;
             color: #007BFF;
         }
 
-        button.checkIn {
+        button.checkIn, button.checkOut {
             font-size: 36px;
+            font-weight: bold;
             padding: 20px 40px;
             background-color: #007BFF;
             color: #fff;
             border: none;
             cursor: pointer;
             margin-top: 30px;
+            display: block;
         }
 
         button.checkOut {
-            font-size: 36px;
-            padding: 20px 40px;
             background-color: #ff0000;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            margin-top: 30px;
         }
 
         button:hover {
@@ -52,17 +50,10 @@
 
         #logo {
             position: absolute;
-            top: 10px;
+            bottom: 10px;
             left: 10px;
             font-size: 14px;
-        }
-
-        #uncLogo {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 100px;
-            height: 100px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -71,7 +62,6 @@
     <button id="checkInButton" class="checkIn">Check In</button>
     <button id="checkOutButton" class="checkOut">Check Out</button>
     <div id="logo">CampusHoops &copy; 2023</div>
-    <img id="uncLogo" src="unc_logo.png" alt="UNC Logo">
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -138,6 +128,7 @@
     </script>
 </body>
 </html>
+
 
 
 
