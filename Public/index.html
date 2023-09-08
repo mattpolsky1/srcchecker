@@ -26,10 +26,20 @@
             color: #007BFF;
         }
 
-        button {
+        button.checkIn {
             font-size: 36px;
             padding: 20px 40px;
             background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin-top: 30px;
+        }
+
+        button.checkOut {
+            font-size: 36px;
+            padding: 20px 40px;
+            background-color: #ff0000;
             color: #fff;
             border: none;
             cursor: pointer;
@@ -50,7 +60,7 @@
 </head>
 <body>
     <h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
-    <button id="checkInButton">Check In</button>
+    <button id="checkInButton" class="checkIn">Check In</button>
     <div id="logo">CampusHoops &copy; 2023</div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -71,6 +81,28 @@
         const previousCheckInStatus = localStorage.getItem(localStorageKey);
         if (previousCheckInStatus === "checkedIn") {
             canCheckIn = false;
+            setCheckOutButton();
+            startCountdown();
+        }
+
+        function setCheckOutButton() {
+            checkInButton.classList.remove("checkIn");
+            checkInButton.classList.add("checkOut");
+            checkInButton.textContent = "Check Out";
+        }
+
+        function setCheckInButton() {
+            checkInButton.classList.remove("checkOut");
+            checkInButton.classList.add("checkIn");
+            checkInButton.textContent = "Check In";
+        }
+
+        function startCountdown() {
+            setTimeout(() => {
+                canCheckIn = true; // Allow checking in again after 90 minutes
+                setCheckInButton();
+                socket.emit('checkOut'); // Automatically check out after 90 minutes
+            }, 90 * 60 * 1000);
         }
 
         checkInButton.addEventListener("click", () => {
@@ -78,9 +110,8 @@
                 socket.emit('checkIn');
                 canCheckIn = false; // Disable checking in
                 localStorage.setItem(localStorageKey, "checkedIn"); // Store check-in status
-                setTimeout(() => {
-                    canCheckIn = true; // Allow checking in again after 90 minutes
-                }, 90 * 60 * 1000);
+                setCheckOutButton();
+                startCountdown();
             } else {
                 alert("You can only Check In once every 1 hour and 30 minutes.");
             }
@@ -92,3 +123,4 @@
     </script>
 </body>
 </html>
+
