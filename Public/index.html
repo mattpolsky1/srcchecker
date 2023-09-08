@@ -61,15 +61,23 @@
         const socket = io();
 
         let canCheckIn = true; // Initially, users can check in
+        const localStorageKey = "checkInStatus";
 
         function updateCount(count) {
             peopleAtGymElement.textContent = count;
+        }
+
+        // Check local storage for previous check-in status
+        const previousCheckInStatus = localStorage.getItem(localStorageKey);
+        if (previousCheckInStatus === "checkedIn") {
+            canCheckIn = false;
         }
 
         checkInButton.addEventListener("click", () => {
             if (canCheckIn) {
                 socket.emit('checkIn');
                 canCheckIn = false; // Disable checking in
+                localStorage.setItem(localStorageKey, "checkedIn"); // Store check-in status
                 setTimeout(() => {
                     canCheckIn = true; // Allow checking in again after 90 minutes
                 }, 90 * 60 * 1000);
