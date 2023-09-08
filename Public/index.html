@@ -58,30 +58,29 @@
         const peopleAtGymElement = document.getElementById("peopleAtGym");
         const checkInButton = document.getElementById("checkInButton");
 
-        
-
         const socket = io();
+
+        let canCheckIn = true; // Initially, users can check in
 
         function updateCount(count) {
             peopleAtGymElement.textContent = count;
         }
 
-
         checkInButton.addEventListener("click", () => {
-            socket.emit('checkIn');
+            if (canCheckIn) {
+                socket.emit('checkIn');
+                canCheckIn = false; // Disable checking in
+                setTimeout(() => {
+                    canCheckIn = true; // Allow checking in again after 90 minutes
+                }, 90 * 60 * 1000);
+            } else {
+                alert("You can only Check In once every 1 hour and 30 minutes.");
+            }
         });
-
-        
-
-
 
         socket.on('updateCount', (count) => {
             updateCount(count);
         });
-
-
     </script>
 </body>
 </html>
-
-
