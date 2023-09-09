@@ -46,6 +46,18 @@
             display: block;
         }
 
+        button.checkOut {
+            font-size: 36px;
+            font-weight: bold;
+            padding: 20px 40px;
+            background-color: #FF5733;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin-top: 30px;
+            display: block;
+        }
+
         button:hover {
             background-color: #0056b3;
         }
@@ -62,13 +74,13 @@
 <body>
     <h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
     <div id="status">Status: Checked Out</div>
-    <button id="checkInButton" class="checkIn">Check In</button>
+    <button id="toggleCheckInButton" class="checkIn">Check In</button>
     <div id="logo">CampusHoops &copy; 2023</div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const peopleAtGymElement = document.getElementById("peopleAtGym");
-        const checkInButton = document.getElementById("checkInButton");
+        const toggleCheckInButton = document.getElementById("toggleCheckInButton");
         const statusElement = document.getElementById("status");
 
         const socket = io();
@@ -89,60 +101,28 @@
         if (previousCheckInStatus === "checkedIn") {
             checkedIn = true; // User was previously checked in
             updateStatus("Checked In");
-            // Automatically check out after 10 seconds
-            setTimeout(() => {
-                checkedIn = false;
-                localStorage.removeItem(localStorageKey);
-                updateStatus("Checked Out");
-                socket.emit('checkOut');
-            }, 10 * 1000);
+            toggleCheckInButton.textContent = "Check Out";
         }
 
-        checkInButton.addEventListener("click", () => {
+        toggleCheckInButton.addEventListener("click", () => {
             if (!checkedIn) {
                 checkedIn = true; // User checks in
                 localStorage.setItem(localStorageKey, "checkedIn");
                 updateStatus("Checked In");
+                toggleCheckInButton.textContent = "Check Out";
                 socket.emit('checkIn'); // Emit the 'checkIn' event to increase count
-                // Automatically check out after 10 seconds
-                setTimeout(() => {
-                    checkedIn = false;
-                    localStorage.removeItem(localStorageKey);
-                    updateStatus("Checked Out");
-                    socket.emit('checkOut');
-                }, 10 * 1000);
             } else {
-                alert("You are already checked in.");
+                checkedIn = false; // User checks out
+                localStorage.removeItem(localStorageKey);
+                updateStatus("Checked Out");
+                toggleCheckInButton.textContent = "Check In";
+                socket.emit('checkOut'); // Emit the 'checkOut' event to decrease count
             }
         });
 
         socket.on('updateCount', (count) => {
             updateCount(count);
         });
-
-        socket.on('checkOut', () => {
-            if (checkedIn) {
-                checkedIn = false; // User checks out
-                localStorage.removeItem(localStorageKey);
-                updateStatus("Checked Out");
-            }
-        });
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
