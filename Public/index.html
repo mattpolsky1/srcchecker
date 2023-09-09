@@ -20,9 +20,6 @@
             font-size: 36px;
             font-weight: bold;
             color: #333;
-            position: absolute;
-            top: 10px;
-            right: 10px;
         }
 
         #peopleAtGym {
@@ -32,7 +29,7 @@
         }
 
         #status {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: bold;
             color: #555;
         }
@@ -79,27 +76,20 @@
             bottom: 10px;
             left: 10px;
         }
-
-        #gymImage {
-            margin-top: 20px;
-            max-width: 300px;
-            max-height: 300px;
-        }
     </style>
 </head>
 <body>
-    <h1>Status: <span id="status">Checked Out</span></h1>
     <h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
+    <div id="status">Status: <span id="statusLabel">Checked Out</span></div>
     <div id="gymStatus">Gym Status: <span id="gymStatusLabel">Empty</span></div>
     <button id="toggleCheckInButton" class="checkIn">Check In</button>
-    <img id="gymImage" src="https://www.pngwing.com/en/search?q=barbell" alt="Gym Image">
     <div id="logo">CampusHoops &copy; 2023</div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const peopleAtGymElement = document.getElementById("peopleAtGym");
         const toggleCheckInButton = document.getElementById("toggleCheckInButton");
-        const statusElement = document.getElementById("status");
+        const statusLabel = document.getElementById("statusLabel");
         const gymStatusLabel = document.getElementById("gymStatusLabel");
 
         const socket = io();
@@ -114,7 +104,7 @@
         }
 
         function updateStatus(status) {
-            statusElement.textContent = status;
+            statusLabel.textContent = status;
         }
 
         function updateGymStatus(count) {
@@ -163,4 +153,5 @@
     </script>
 </body>
 </html>
+
 
