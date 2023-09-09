@@ -9,6 +9,8 @@ const io = socketIO(server);
 
 let totalCheckIns = 0;
 let lastCheckInTime = 0;
+let checkedIn = false; // Initially, the user is not checked in
+const localStorageKey = "checkInStatus";
 
 // Define the path to your static files directory
 const publicPath = path.join(__dirname, 'Public');
@@ -24,9 +26,13 @@ app.get('/', (req, res) => {
 
 function updatePeopleCount() {
     const currentTime = Date.now();
-    if (currentTime - lastCheckInTime >= 8 * 60 * 60 * 1000) {
-        lastCheckInTime = currentTime;
-        totalCheckIns = 0;
+    if (currentTime - lastCheckInTime >= 10 * 1000) {
+        if (checkedIn) {
+            checkedIn = false;
+            localStorage.removeItem(localStorageKey);
+            totalCheckIns--;
+            io.emit('updateCount', totalCheckIns);
+        }
     }
 }
 
@@ -35,15 +41,26 @@ io.on('connection', (socket) => {
 
     socket.on('checkIn', () => {
         updatePeopleCount();
-        totalCheckIns++;
-        io.emit('updateCount', totalCheckIns);
+        if (!checkedIn) {
+            checkedIn = true;
+            localStorage.setItem(localStorageKey, "checkedIn");
+            lastCheckInTime = Date.now(); // Store check-in time
+            totalCheckIns++;
+            io.emit('updateCount', totalCheckIns);
+        }
     });
 
     socket.on('checkOut', () => {
-        if (totalCheckIns > 0) {
+        if (checkedIn) {
+            checkedIn = false;
+            localStorage.removeItem(localStorageKey);
             totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
         }
+    });
+
+    socket.on('disconnect', () => {
+        updatePeopleCount();
     });
 });
 
