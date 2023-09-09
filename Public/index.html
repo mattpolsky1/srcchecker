@@ -17,9 +17,12 @@
         }
 
         h1 {
-            font-size: 72px;
+            font-size: 36px;
             font-weight: bold;
             color: #333;
+            position: absolute;
+            top: 10px;
+            right: 10px;
         }
 
         #peopleAtGym {
@@ -32,6 +35,13 @@
             font-size: 24px;
             font-weight: bold;
             color: #555;
+        }
+
+        #gymStatus {
+            font-size: 24px;
+            font-weight: bold;
+            color: #555;
+            margin-top: 20px;
         }
 
         button.checkIn {
@@ -63,18 +73,26 @@
         }
 
         #logo {
+            font-size: 14px;
+            font-weight: bold;
             position: absolute;
             bottom: 10px;
             left: 10px;
-            font-size: 14px;
-            font-weight: bold;
+        }
+
+        #gymImage {
+            margin-top: 20px;
+            max-width: 300px;
+            max-height: 300px;
         }
     </style>
 </head>
 <body>
+    <h1>Status: <span id="status">Checked Out</span></h1>
     <h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
-    <div id="status">Status: Checked Out</div>
+    <div id="gymStatus">Gym Status: <span id="gymStatusLabel">Empty</span></div>
     <button id="toggleCheckInButton" class="checkIn">Check In</button>
+    <img id="gymImage" src="https://www.pngwing.com/en/search?q=barbell" alt="Gym Image">
     <div id="logo">CampusHoops &copy; 2023</div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -82,18 +100,31 @@
         const peopleAtGymElement = document.getElementById("peopleAtGym");
         const toggleCheckInButton = document.getElementById("toggleCheckInButton");
         const statusElement = document.getElementById("status");
+        const gymStatusLabel = document.getElementById("gymStatusLabel");
 
         const socket = io();
 
         let checkedIn = false; // Initially, the user is not checked in
+        let lastCheckOutTime = 0; // Timestamp for the last check-out
         const localStorageKey = "checkInStatus";
 
         function updateCount(count) {
             peopleAtGymElement.textContent = count;
+            updateGymStatus(count);
         }
 
         function updateStatus(status) {
-            statusElement.textContent = `Status: ${status}`;
+            statusElement.textContent = status;
+        }
+
+        function updateGymStatus(count) {
+            if (count === 0) {
+                gymStatusLabel.textContent = "Empty";
+            } else if (count === 1) {
+                gymStatusLabel.textContent = "Busy";
+            } else {
+                gymStatusLabel.textContent = "Packed";
+            }
         }
 
         // Check local storage for previous check-in status
@@ -106,16 +137,22 @@
 
         toggleCheckInButton.addEventListener("click", () => {
             if (!checkedIn) {
-                checkedIn = true; // User checks in
-                localStorage.setItem(localStorageKey, "checkedIn");
-                updateStatus("Checked In");
-                toggleCheckInButton.textContent = "Check Out";
-                socket.emit('checkIn'); // Emit the 'checkIn' event to increase count
+                const currentTime = Date.now();
+                if (currentTime - lastCheckOutTime >= 15000) { // 15-second cooldown
+                    checkedIn = true; // User checks in
+                    localStorage.setItem(localStorageKey, "checkedIn");
+                    updateStatus("Checked In");
+                    toggleCheckInButton.textContent = "Check Out";
+                    socket.emit('checkIn'); // Emit the 'checkIn' event to increase count
+                } else {
+                    alert("Please wait 15 seconds before checking in again.");
+                }
             } else {
                 checkedIn = false; // User checks out
                 localStorage.removeItem(localStorageKey);
                 updateStatus("Checked Out");
                 toggleCheckInButton.textContent = "Check In";
+                lastCheckOutTime = Date.now();
                 socket.emit('checkOut'); // Emit the 'checkOut' event to decrease count
             }
         });
@@ -126,3 +163,4 @@
     </script>
 </body>
 </html>
+
