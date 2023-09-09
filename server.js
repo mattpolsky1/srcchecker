@@ -26,13 +26,11 @@ app.get('/', (req, res) => {
 
 function updatePeopleCount() {
     const currentTime = Date.now();
-    if (currentTime - lastCheckInTime >= 10 * 1000) {
-        if (checkedIn) {
-            checkedIn = false;
-            localStorage.removeItem(localStorageKey);
-            totalCheckIns--;
-            io.emit('updateCount', totalCheckIns);
-        }
+    if (checkedIn && currentTime - lastCheckInTime >= 10 * 1000) {
+        checkedIn = false;
+        localStorage.removeItem(localStorageKey);
+        totalCheckIns--;
+        io.emit('updateCount', totalCheckIns);
     }
 }
 
@@ -40,11 +38,11 @@ io.on('connection', (socket) => {
     socket.emit('updateCount', totalCheckIns);
 
     socket.on('checkIn', () => {
-        updatePeopleCount();
-        if (!checkedIn) {
+        const currentTime = Date.now();
+        if (!checkedIn && currentTime - lastCheckInTime >= 10 * 1000) {
             checkedIn = true;
             localStorage.setItem(localStorageKey, "checkedIn");
-            lastCheckInTime = Date.now(); // Store check-in time
+            lastCheckInTime = currentTime; // Store check-in time
             totalCheckIns++;
             io.emit('updateCount', totalCheckIns);
         }
