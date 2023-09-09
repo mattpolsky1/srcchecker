@@ -8,7 +8,7 @@ const server = http.createServer(app);
 const io = socketIO(server);
 
 let totalCheckIns = 0;
-let lastCheckInTime = 0;
+const checkInTimeout = 10 * 1000; // 10 seconds timeout for check-ins
 
 // Define the path to your static files directory
 const publicPath = path.join(__dirname, 'Public');
@@ -23,24 +23,29 @@ app.get('/', (req, res) => {
 });
 
 function updatePeopleCount() {
+    // Check if users are still checked in and automatically check them out
     const currentTime = Date.now();
-    if (currentTime - lastCheckInTime >= 8 * 60 * 60 * 1000) {
-        lastCheckInTime = currentTime;
-        totalCheckIns = 0;
-    }
+    io.sockets.clients().forEach((socket) => {
+        const checkInTime = socket.checkInTime || 0;
+        if (currentTime - checkInTime >= checkInTimeout) {
+            socket.checkInTime = 0; // Reset check-in time
+            totalCheckIns--;
+            io.emit('updateCount', totalCheckIns);
+        }
+    });
 }
 
 io.on('connection', (socket) => {
     socket.emit('updateCount', totalCheckIns);
 
     socket.on('checkIn', () => {
-        updatePeopleCount();
         totalCheckIns++;
+        socket.checkInTime = Date.now(); // Store check-in time
         io.emit('updateCount', totalCheckIns);
     });
 
-    socket.on('checkOut', () => {
-        if (totalCheckIns > 0) {
+    socket.on('disconnect', () => {
+        if (socket.checkInTime) {
             totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
         }
@@ -53,4 +58,5 @@ server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
-updatePeopleCount();
+setInterval(updatePeopleCount, 1000); // Check for expired check-ins every second
+
