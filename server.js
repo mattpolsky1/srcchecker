@@ -44,6 +44,14 @@ io.on('connection', (socket) => {
         io.emit('updateCount', totalCheckIns);
     });
 
+    socket.on('checkOut', () => {
+        if (socket.checkInTime) {
+            totalCheckIns--;
+            io.emit('updateCount', totalCheckIns);
+            socket.checkInTime = 0; // Reset check-in time
+        }
+    });
+
     socket.on('disconnect', () => {
         if (socket.checkInTime) {
             totalCheckIns--;
@@ -58,5 +66,4 @@ server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
-setInterval(updatePeopleCount, 1000); // Check for expired check-ins every second
-
+setInterval(updatePeopleCount, 1000); // Check for expired check
