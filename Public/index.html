@@ -123,14 +123,21 @@
             }
         }
 
-        // Check local storage for previous check-in status
-        const previousCheckInStatus = localStorage.getItem(localStorageKey);
-        if (previousCheckInStatus === "checkedIn") {
-            checkedIn = true; // User was previously checked in
-            updateStatus("Checked In");
-            toggleCheckInButton.textContent = "Check Out";
+        // Function to get the user's location
+        function getUserLocation() {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const userLatitude = position.coords.latitude;
+                const userLongitude = position.coords.longitude;
+
+                // Send userLatitude and userLongitude to the server when checking in
+                socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
+            }, (error) => {
+                console.error('Error getting user location:', error);
+                alert('Error getting your location. Please check your browser settings and try again.');
+            });
         }
 
+        // Event listener for the Check-In button
         toggleCheckInButton.addEventListener("click", () => {
             if (!checkedIn) {
                 const currentTime = Date.now();
@@ -139,7 +146,9 @@
                     localStorage.setItem(localStorageKey, "checkedIn");
                     updateStatus("Checked In");
                     toggleCheckInButton.textContent = "Check Out";
-                    socket.emit('checkIn'); // Emit the 'checkIn' event to increase count
+                    
+                    // Get the user's location and send it to the server
+                    getUserLocation();
                 } else {
                     alert("Please wait 15 seconds before checking in again.");
                 }
@@ -159,6 +168,7 @@
     </script>
 </body>
 </html>
+
 
 
 

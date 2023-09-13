@@ -10,6 +10,11 @@ const io = socketIO(server);
 let totalCheckIns = 0;
 let lastCheckInTime = 0;
 
+// Define the target location coordinates (latitude and longitude)
+const targetLatitude = 35.90927;
+const targetLongitude = -79.04746;
+const maxDistanceMiles = 0.5; // Maximum allowed distance in miles
+
 // Define the path to your static files directory
 const publicPath = path.join(__dirname, 'Public');
 
@@ -22,18 +27,14 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath);
 });
 
-// Include your Google Maps API key here
-const apiKey = 'AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs'; // Replace with your actual API key
-
-// Middleware to calculate distance between two coordinates
 function calculateDistance(lat1, lon1, lat2, lon2) {
+    // Calculate the distance between two points using Haversine formula
     const R = 6371; // Radius of the Earth in kilometers
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
     const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * (Math.PI / 180)) *
-        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c; // Distance in kilometers
@@ -50,10 +51,6 @@ function updatePeopleCount() {
     }
 }
 
-// Target location coordinates (35.90927, -79.04746)
-const targetLatitude = 35.90927;
-const targetLongitude = -79.04746;
-
 io.on('connection', (socket) => {
     socket.emit('updateCount', totalCheckIns);
 
@@ -69,15 +66,15 @@ io.on('connection', (socket) => {
             targetLongitude
         );
 
-        // Check if the user is within 0.1 miles of the target location
-        if (distance <= 0.1) {
+        // Check if the user is within the maximum allowed distance (0.5 miles)
+        if (distance <= maxDistanceMiles) {
             // Increment the count only if the check-in is successful
             updatePeopleCount();
             totalCheckIns++;
             io.emit('updateCount', totalCheckIns);
         } else {
-            // Inform the user that they are not within 0.1 miles of the target location.
-            socket.emit('checkInFailed', 'You are not within 0.1 miles of the specified location. Check-in not allowed.');
+            // Inform the user that they are not within the allowed distance.
+            socket.emit('checkInFailed', `You are not within ${maxDistanceMiles} miles of the specified location. Check-in not allowed.`);
         }
     });
 
