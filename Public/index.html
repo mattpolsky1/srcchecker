@@ -90,129 +90,122 @@
 
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <!-- ... (previous HTML code) ... -->
+    <script>
+        const peopleAtGymElement = document.getElementById("peopleAtGym");
+        const toggleCheckInButton = document.getElementById("toggleCheckInButton");
+        const statusLabel = document.getElementById("statusLabel");
+        const gymStatusLabel = document.getElementById("gymStatusLabel");
 
-<script>
-    const peopleAtGymElement = document.getElementById("peopleAtGym");
-    const toggleCheckInButton = document.getElementById("toggleCheckInButton");
-    const statusLabel = document.getElementById("statusLabel");
-    const gymStatusLabel = document.getElementById("gymStatusLabel");
+        const socket = io();
 
-    const socket = io();
+        let checkedIn = false;
+        let lastCheckOutTime = 0;
+        const localStorageKey = "checkInStatus";
 
-    // Function to update the UI based on the server response
-    function updateUI(data) {
-        checkedIn = data.checkedIn;
-        updateStatus(checkedIn ? "Checked In" : "Checked Out");
-        toggleCheckInButton.textContent = checkedIn ? "Check Out" : "Check In";
-        updateCount(data.totalCheckIns);
-    }
+        // Retrieve the current check-in status and count from the server
+        socket.emit('getCurrentStatus', (data) => {
+            checkedIn = data.checkedIn;
+            updateStatus(checkedIn ? "Checked In" : "Checked Out");
+            toggleCheckInButton.textContent = checkedIn ? "Check Out" : "Check In";
+            updateCount(data.totalCheckIns);
+        });
 
-    // Retrieve the current check-in status and count from the server
-    socket.emit('getCurrentStatus', (data) => {
-        updateUI(data);
-    });
+        // Event listener for the Check-In button
+        toggleCheckInButton.addEventListener("click", () => {
+            if (!checkedIn) {
+                const currentTime = Date.now();
+                if (currentTime - lastCheckOutTime >= 15000) { // 15-second cooldown
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition((position) => {
+                            const userLatitude = position.coords.latitude;
+                            const userLongitude = position.coords.longitude;
+                            const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
+                            const distance = getDistance({ latitude: userLatitude, longitude: userLongitude }, targetLocation);
 
-    // Event listener for the Check-In button
-    toggleCheckInButton.addEventListener("click", () => {
-        if (!checkedIn) {
-            const currentTime = Date.now();
-            if (currentTime - lastCheckOutTime >= 15000) { // 15-second cooldown
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition((position) => {
-                        const userLatitude = position.coords.latitude;
-                        const userLongitude = position.coords.longitude;
-                        const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
-                        const distance = getDistance({ latitude: userLatitude, longitude: userLongitude }, targetLocation);
-
-                        if (distance <= 3218.69) { // Within 2 miles
-                            checkedIn = true;
-                            localStorage.setItem(socket.id, 'true');
-                            updateStatus("Checked In");
-                            toggleCheckInButton.textContent = "Check Out";
-                            socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
-                        } else {
-                            alert("You are not within 2 miles of the specified location. Check-in not allowed.");
-                        }
-                    }, (error) => {
-                        console.error('Error getting user location:', error);
-                        alert('Error getting your location. Please check your web settings and try again.');
-                    });
+                            if (distance <= 3218.69) { // Within 2 miles
+                                checkedIn = true;
+                                localStorage.setItem(localStorageKey, "checkedIn");
+                                updateStatus("Checked In");
+                                toggleCheckInButton.textContent = "Check Out";
+                                socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
+                            } else {
+                                alert("You are not within 2 miles of the specified location. Check-in not allowed.");
+                            }
+                        }, (error) => {
+                            console.error('Error getting user location:', error);
+                            alert('Error getting your location. Please check your web settings and try again.');
+                        });
+                    } else {
+                        alert('Geolocation is not supported by your browser.');
+                    }
                 } else {
-                    alert('Geolocation is not supported by your browser.');
+                    alert("Please wait 15 seconds before checking in again.");
                 }
             } else {
-                alert("Please wait 15 seconds before checking in again.");
+                checkedIn = false;
+                localStorage.removeItem(localStorageKey);
+                updateStatus("Checked Out");
+                toggleCheckInButton.textContent = "Check In";
+                lastCheckOutTime = Date.now();
+                socket.emit('checkOut');
             }
-        } else {
-            checkedIn = false;
-            localStorage.removeItem(socket.id);
-            updateStatus("Checked Out");
-            toggleCheckInButton.textContent = "Check In";
-            lastCheckOutTime = Date.now();
-            socket.emit('checkOut');
+        });
+
+        socket.on('updateCount', (count) => {
+            updateCount(count);
+        });
+
+        socket.on('checkInNotAllowed', () => {
+            alert('You are not within 2 miles of the specified location. Check-in not allowed.');
+        });
+
+        function updateCount(count) {
+            peopleAtGymElement.textContent = count;
+            updateGymStatus(count);
         }
-    });
 
-    socket.on('updateCount', (count) => {
-        updateCount(count);
-    });
-
-    socket.on('checkInNotAllowed', () => {
-        alert('You are not within 2 miles of the specified location. Check-in not allowed.');
-    });
-
-    function updateCount(count) {
-        peopleAtGymElement.textContent = count;
-        updateGymStatus(count);
-    }
-
-    function updateStatus(status) {
-        statusLabel.textContent = status;
-    }
-
-    function updateGymStatus(count) {
-        if (count >= 0 && count <= 19) {
-            gymStatusLabel.textContent = "Empty";
-        } else if (count >= 20 && count <= 39) {
-            gymStatusLabel.textContent = "Moderate";
-        } else if (count >= 40 && count <= 59) {
-            gymStatusLabel.textContent = "Busy";
-        } else {
-            gymStatusLabel.textContent = "Packed";
+        function updateStatus(status) {
+            statusLabel.textContent = status;
         }
-    }
 
-    function getDistance(location1, location2) {
-        const R = 6371;
-        const lat1 = location1.latitude;
-        const lon1 = location1.longitude;
-        const lat2 = location2.latitude;
-        const lon2 = location2.longitude;
+        function updateGymStatus(count) {
+            if (count >= 0 && count <= 19) {
+                gymStatusLabel.textContent = "Empty";
+            } else if (count >= 20 && count <= 39) {
+                gymStatusLabel.textContent = "Moderate";
+            } else if (count >= 40 && count <= 59) {
+                gymStatusLabel.textContent = "Busy";
+            } else {
+                gymStatusLabel.textContent = "Packed";
+            }
+        }
 
-        const dLat = toRadians(lat2 - lat1);
-        const dLon = toRadians(lon2 - lon1);
+        function getDistance(location1, location2) {
+            const R = 6371;
+            const lat1 = location1.latitude;
+            const lon1 = location1.longitude;
+            const lat2 = location2.latitude;
+            const lon2 = location2.longitude;
 
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const dLat = toRadians(lat2 - lat1);
+            const dLon = toRadians(lon2 - lon1);
 
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = R * c;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
-        return distance * 1000;
-    }
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c;
 
-    function toRadians(degrees) {
-        return degrees * (Math.PI / 180);
-    }
-</script>
+            return distance * 1000;
+        }
 
-<!-- ... (remaining HTML code) ... -->
-
+        function toRadians(degrees) {
+            return degrees * (Math.PI / 180);
+        }
+    </script>
 </body>
 </html>
-
 
 
 
