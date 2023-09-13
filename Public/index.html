@@ -79,11 +79,6 @@
             bottom: 10px;
             left: 10px;
         }
-
-        #map {
-            width: 100%; /* Adjust the map's width as needed */
-            height: 300px; /* Adjust the map's height as needed */
-        }
     </style>
 </head>
 <body>
@@ -107,6 +102,50 @@
         let lastCheckOutTime = 0; // Timestamp for the last check-out
         const localStorageKey = "checkInStatus";
 
+        // Event listener for the Check-In button
+        toggleCheckInButton.addEventListener("click", () => {
+            if (!checkedIn) {
+                const currentTime = Date.now();
+                if (currentTime - lastCheckOutTime >= 15000) { // 15-second cooldown
+                    checkedIn = true; // User checks in
+                    localStorage.setItem(localStorageKey, "checkedIn");
+                    updateStatus("Checked In");
+                    toggleCheckInButton.textContent = "Check Out";
+                    
+                    // Get the user's location and send it to the server
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition((position) => {
+                            const userLatitude = position.coords.latitude;
+                            const userLongitude = position.coords.longitude;
+                            socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
+                        }, (error) => {
+                            console.error('Error getting user location:', error);
+                            alert('Error getting your location. Please check your browser settings and try again.');
+                        });
+                    } else {
+                        alert('Geolocation is not supported by your browser.');
+                    }
+                } else {
+                    alert("Please wait 15 seconds before checking in again.");
+                }
+            } else {
+                checkedIn = false; // User checks out
+                localStorage.removeItem(localStorageKey);
+                updateStatus("Checked Out");
+                toggleCheckInButton.textContent = "Check In";
+                lastCheckOutTime = Date.now();
+                socket.emit('checkOut'); // Emit the 'checkOut' event to decrease count
+            }
+        });
+
+        socket.on('updateCount', (count) => {
+            updateCount(count);
+        });
+
+        socket.on('checkInNotAllowed', () => {
+            alert('You are not within 2 miles of the specified location. Check-in not allowed.');
+        });
+
         function updateCount(count) {
             peopleAtGymElement.textContent = count;
             updateGymStatus(count);
@@ -127,73 +166,11 @@
                 gymStatusLabel.textContent = "Packed";
             }
         }
-
-        // Check local storage for previous check-in status
-        const previousCheckInStatus = localStorage.getItem(localStorageKey);
-        if (previousCheckInStatus === "checkedIn") {
-            checkedIn = true; // User was previously checked in
-            updateStatus("Checked In");
-            toggleCheckInButton.textContent = "Check Out";
-        }
-
-        // Function to get the user's location using Google Maps Geolocation API
-        function getUserLocation() {
-            const geocoder = new google.maps.Geocoder();
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const userLatitude = position.coords.latitude;
-                    const userLongitude = position.coords.longitude;
-
-                    // Create a LatLng object for the user's location
-                    const userLocation = new google.maps.LatLng(userLatitude, userLongitude);
-
-                    // Calculate the distance between user's location and the target location
-                    const targetLocation = new google.maps.LatLng(35.90927, -79.04746);
-                    const distance = google.maps.geometry.spherical.computeDistanceBetween(userLocation, targetLocation);
-
-                    // Check if the user is within 2 miles of the target location (3218.69 meters)
-                    if (distance <= 3218.69) {
-                        // Send userLatitude and userLongitude to the server when checking in
-                        socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
-                    } else {
-                        alert('You are not within 2 miles of the specified location. Check-in not allowed.');
-                    }
-                }, (error) => {
-                    console.error('Error getting user location:', error);
-                    alert('Error getting your location. Please check your browser settings and try again.');
-                });
-            } else {
-                alert('Geolocation is not supported by your browser.');
-            }
-        }
-
-        toggleCheckInButton.addEventListener("click", () => {
-            if (!checkedIn) {
-                const currentTime = Date.now();
-                if (currentTime - lastCheckOutTime >= 15000) { // 15-second cooldown
-                    checkedIn = true; // User checks in
-                    localStorage.setItem(localStorageKey, "checkedIn");
-                    updateStatus("Checked In");
-                    toggleCheckInButton.textContent = "Check Out";
-                    // Get the user's location and send it to the server
-                    getUserLocation();
-                } else {
-                    alert("Please wait 15 seconds before checking in again.");
-                }
-            } else {
-                checkedIn = false; // User checks out
-                localStorage.removeItem(localStorageKey);
-                updateStatus("Checked Out");
-                toggleCheckInButton.textContent = "Check In";
-                lastCheckOutTime = Date.now();
-                socket.emit('checkOut'); // Emit the 'checkOut' event to decrease count
-            }
-        });
-
-        socket.on('updateCount', (count) => {
-            updateCount(count);
-        });
     </script>
 </body>
 </html>
+
+
+
+
+
