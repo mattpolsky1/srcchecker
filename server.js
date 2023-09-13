@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const session = require('express-session');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,21 +16,18 @@ const publicPath = path.join(__dirname, 'Public');
 // Serve static files from the "Public" directory
 app.use(express.static(publicPath));
 
-// Use express-session middleware
-app.use(session({
-    secret: 'your-secret-key',
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-        maxAge: 15 * 1000, // 15 seconds in milliseconds
-    },
-}));
-
 // Route handler for the root URL ("/")
 app.get('/', (req, res) => {
     const indexPath = path.join(publicPath, 'index.html');
     res.sendFile(indexPath);
 });
+
+// Function to check if the user is already checked in
+function isUserCheckedIn(socket) {
+    // Check if the user has a 'checkedIn' flag in localStorage
+    const checkedIn = localStorage.getItem('checkedIn');
+    return checkedIn === 'true';
+}
 
 function updatePeopleCount() {
     const currentTime = Date.now();
@@ -42,15 +38,20 @@ function updatePeopleCount() {
 }
 
 io.on('connection', (socket) => {
-    socket.emit('updateCount', totalCheckIns);
+    // Check if the user is already checked in when they connect
+    const checkedIn = isUserCheckedIn(socket);
+    if (checkedIn) {
+        socket.emit('updateCount', totalCheckIns);
+    }
 
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
 
         // Check if geolocation data is available
         if (userLocation && userLocation.latitude && userLocation.longitude) {
-            // Check if the user has an active session (checked in)
-            if (socket.handshake.session.checkedIn) {
+            // Check if the user is already checked in
+            const checkedIn = isUserCheckedIn(socket);
+            if (checkedIn) {
                 // Notify the client that check-in is not allowed
                 socket.emit('checkInNotAllowed');
             } else {
@@ -63,9 +64,8 @@ io.on('connection', (socket) => {
                     totalCheckIns++;
                     io.emit('updateCount', totalCheckIns);
 
-                    // Set the session to mark the user as checked in
-                    socket.handshake.session.checkedIn = true;
-                    socket.handshake.session.save();
+                    // Set the 'checkedIn' flag in localStorage
+                    localStorage.setItem('checkedIn', 'true');
                 } else {
                     // Notify the client that check-in is not allowed
                     socket.emit('checkInNotAllowed');
@@ -78,17 +78,27 @@ io.on('connection', (socket) => {
     });
 
     socket.on('checkOut', () => {
-        if (socket.handshake.session.checkedIn) {
+        // Check if the user is already checked in
+        const checkedIn = isUserCheckedIn(socket);
+        if (checkedIn) {
             totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
 
-            // Clear the session to mark the user as checked out
-            socket.handshake.session.checkedIn = false;
-            socket.handshake.session.save();
+            // Remove the 'checkedIn' flag from localStorage
+            localStorage.removeItem('checkedIn');
         }
     });
 });
 
+// ...
+
+// Start the server on the specified port
+const PORT = process.env.PORT || 8080;
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+
+// Function to calculate the distance between two locations
 function getDistance(location1, location2) {
     // Haversine formula to calculate distance between two points on the Earth's surface
     const R = 6371; // Radius of the Earth in kilometers
@@ -110,14 +120,9 @@ function getDistance(location1, location2) {
     return distance * 1000; // Convert to meters
 }
 
+// Function to convert degrees to radians
 function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
-
-const PORT = process.env.PORT || 8080;
-
-server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
 
 
