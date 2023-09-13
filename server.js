@@ -22,13 +22,6 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath);
 });
 
-// Function to check if the user is already checked in
-function isUserCheckedIn(socket) {
-    // Check if the user has a 'checkedIn' flag in localStorage
-    const checkedIn = localStorage.getItem('checkedIn');
-    return checkedIn === 'true';
-}
-
 function updatePeopleCount() {
     const currentTime = Date.now();
     if (currentTime - lastCheckInTime >= 8 * 60 * 60 * 1000) {
@@ -38,38 +31,24 @@ function updatePeopleCount() {
 }
 
 io.on('connection', (socket) => {
-    // Check if the user is already checked in when they connect
-    const checkedIn = isUserCheckedIn(socket);
-    if (checkedIn) {
-        socket.emit('updateCount', totalCheckIns);
-    }
+    socket.emit('updateCount', totalCheckIns);
 
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
 
         // Check if geolocation data is available
         if (userLocation && userLocation.latitude && userLocation.longitude) {
-            // Check if the user is already checked in
-            const checkedIn = isUserCheckedIn(socket);
-            if (checkedIn) {
+            // Calculate the distance between user's location and the target location
+            const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
+            const distance = getDistance(userLocation, targetLocation);
+
+            // Check if the user is within 2 miles of the target location (3218.69 meters)
+            if (distance <= 3218.69) {
+                totalCheckIns++;
+                io.emit('updateCount', totalCheckIns);
+            } else {
                 // Notify the client that check-in is not allowed
                 socket.emit('checkInNotAllowed');
-            } else {
-                // Calculate the distance between user's location and the target location
-                const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
-                const distance = getDistance(userLocation, targetLocation);
-
-                // Check if the user is within 2 miles of the target location (3218.69 meters)
-                if (distance <= 3218.69) {
-                    totalCheckIns++;
-                    io.emit('updateCount', totalCheckIns);
-
-                    // Set the 'checkedIn' flag in localStorage
-                    localStorage.setItem('checkedIn', 'true');
-                } else {
-                    // Notify the client that check-in is not allowed
-                    socket.emit('checkInNotAllowed');
-                }
             }
         } else {
             // Handle the case where geolocation data is not available
@@ -78,27 +57,13 @@ io.on('connection', (socket) => {
     });
 
     socket.on('checkOut', () => {
-        // Check if the user is already checked in
-        const checkedIn = isUserCheckedIn(socket);
-        if (checkedIn) {
+        if (totalCheckIns > 0) {
             totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
-
-            // Remove the 'checkedIn' flag from localStorage
-            localStorage.removeItem('checkedIn');
         }
     });
 });
 
-// ...
-
-// Start the server on the specified port
-const PORT = process.env.PORT || 8080;
-server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
-
-// Function to calculate the distance between two locations
 function getDistance(location1, location2) {
     // Haversine formula to calculate distance between two points on the Earth's surface
     const R = 6371; // Radius of the Earth in kilometers
@@ -120,9 +85,14 @@ function getDistance(location1, location2) {
     return distance * 1000; // Convert to meters
 }
 
-// Function to convert degrees to radians
 function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
+
+const PORT = process.env.PORT || 8080;
+
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
 
 
