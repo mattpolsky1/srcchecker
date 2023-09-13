@@ -10,11 +10,6 @@ const io = socketIO(server);
 let totalCheckIns = 0;
 let lastCheckInTime = 0;
 
-// Define the target location coordinates (latitude and longitude)
-const targetLatitude = 35.90927;
-const targetLongitude = -79.04746;
-const maxDistanceMiles = 0.5; // Maximum allowed distance in miles
-
 // Define the path to your static files directory
 const publicPath = path.join(__dirname, 'Public');
 
@@ -27,22 +22,6 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath);
 });
 
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    // Calculate the distance between two points using Haversine formula
-    const R = 6371; // Radius of the Earth in kilometers
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in kilometers
-
-    // Convert distance to miles
-    return distance * 0.621371;
-}
-
 function updatePeopleCount() {
     const currentTime = Date.now();
     if (currentTime - lastCheckInTime >= 8 * 60 * 60 * 1000) {
@@ -54,27 +33,20 @@ function updatePeopleCount() {
 io.on('connection', (socket) => {
     socket.emit('updateCount', totalCheckIns);
 
-    socket.on('checkIn', (data) => {
-        const userLatitude = parseFloat(data.latitude);
-        const userLongitude = parseFloat(data.longitude);
+    socket.on('checkIn', (userLocation) => {
+        updatePeopleCount();
 
-        // Calculate the distance between the user's location and the target location
-        const distance = calculateDistance(
-            userLatitude,
-            userLongitude,
-            targetLatitude,
-            targetLongitude
-        );
+        // Calculate the distance between user's location and the target location
+        const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
+        const distance = getDistance(userLocation, targetLocation);
 
-        // Check if the user is within the maximum allowed distance (0.5 miles)
-        if (distance <= maxDistanceMiles) {
-            // Increment the count only if the check-in is successful
-            updatePeopleCount();
+        // Check if the user is within 1 mile of the target location (1609.34 meters)
+        if (distance <= 1609.34) {
             totalCheckIns++;
             io.emit('updateCount', totalCheckIns);
         } else {
-            // Inform the user that they are not within the allowed distance.
-            socket.emit('checkInFailed', `You are not within ${maxDistanceMiles} miles of the specified location. Check-in not allowed.`);
+            // Notify the client that check-in is not allowed
+            socket.emit('checkInNotAllowed');
         }
     });
 
@@ -85,6 +57,31 @@ io.on('connection', (socket) => {
         }
     });
 });
+
+function getDistance(location1, location2) {
+    // Haversine formula to calculate distance between two points on the Earth's surface
+    const R = 6371; // Radius of the Earth in kilometers
+    const lat1 = location1.latitude;
+    const lon1 = location1.longitude;
+    const lat2 = location2.latitude;
+    const lon2 = location2.longitude;
+
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in kilometers
+
+    return distance * 1000; // Convert to meters
+}
+
+function toRadians(degrees) {
+    return degrees * (Math.PI / 180);
+}
 
 const PORT = process.env.PORT || 8080;
 
