@@ -30,39 +30,59 @@ function updatePeopleCount() {
     }
 }
 
+// ...
+
 io.on('connection', (socket) => {
     socket.emit('updateCount', totalCheckIns);
+
+    // Check if the user has already checked in (using localStorage)
+    if (localStorage.getItem('checkedIn')) {
+        socket.emit('checkInNotAllowed');
+    }
 
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
 
-        // Check if geolocation data is available
-        if (userLocation && userLocation.latitude && userLocation.longitude) {
-            // Calculate the distance between user's location and the target location
-            const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
-            const distance = getDistance(userLocation, targetLocation);
+        // Check if the user has already checked in (using localStorage)
+        if (localStorage.getItem('checkedIn')) {
+            socket.emit('checkInNotAllowed');
+        } else {
+            // Check if geolocation data is available
+            if (userLocation && userLocation.latitude && userLocation.longitude) {
+                // Calculate the distance between user's location and the target location
+                const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
+                const distance = getDistance(userLocation, targetLocation);
 
-            // Check if the user is within 2 miles of the target location (3218.69 meters)
-            if (distance <= 3218.69) {
-                totalCheckIns++;
-                io.emit('updateCount', totalCheckIns);
+                // Check if the user is within 2 miles of the target location (3218.69 meters)
+                if (distance <= 3218.69) {
+                    totalCheckIns++;
+                    io.emit('updateCount', totalCheckIns);
+
+                    // Set a flag in localStorage to indicate that the user has checked in
+                    localStorage.setItem('checkedIn', 'true');
+                } else {
+                    // Notify the client that check-in is not allowed
+                    socket.emit('checkInNotAllowed');
+                }
             } else {
-                // Notify the client that check-in is not allowed
+                // Handle the case where geolocation data is not available
                 socket.emit('checkInNotAllowed');
             }
-        } else {
-            // Handle the case where geolocation data is not available
-            socket.emit('checkInNotAllowed');
         }
     });
 
     socket.on('checkOut', () => {
-        if (totalCheckIns > 0) {
+        if (localStorage.getItem('checkedIn')) {
             totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
+
+            // Remove the 'checkedIn' flag from localStorage to mark the user as checked out
+            localStorage.removeItem('checkedIn');
         }
     });
 });
+
+
 
 function getDistance(location1, location2) {
     // Haversine formula to calculate distance between two points on the Earth's surface
