@@ -45,7 +45,8 @@ io.on('connection', (socket) => {
             // Check if the user is within 2 miles of the target location (3218.69 meters)
             if (distance <= 3218.69) {
                 totalCheckIns++;
-                io.emit('updateCount', totalCheckIns); // Emit the event here for a valid check-in
+                socket.emit('updateCount', totalCheckIns); // Emit the event to the current socket for a valid check-in
+                io.emit('updateCount', totalCheckIns); // Emit the event to all clients for a valid check-in
             } else {
                 // Notify the client that check-in is not allowed
                 socket.emit('checkInNotAllowed');
@@ -63,6 +64,7 @@ io.on('connection', (socket) => {
         }
     });
 });
+
 
 
 function getDistance(location1, location2) {
