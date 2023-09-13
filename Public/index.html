@@ -124,25 +124,6 @@
                                 updateStatus("Checked In");
                                 toggleCheckInButton.textContent = "Check Out";
                                 socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
-
-                                let canCheckOut = false; // Initially, the user cannot check out
-                                setTimeout(() => {
-                                    canCheckOut = true; // Enable check-out after 15 seconds
-                                }, 15000);
-
-                                // Check-out button event listener
-                                toggleCheckInButton.addEventListener("click", () => {
-                                    if (canCheckOut) {
-                                        checkedIn = false; // User checks out
-                                        localStorage.removeItem(localStorageKey);
-                                        updateStatus("Checked Out");
-                                        toggleCheckInButton.textContent = "Check In";
-                                        lastCheckOutTime = Date.now();
-                                        socket.emit('checkOut'); // Emit the 'checkOut' event to decrease count
-                                    } else {
-                                        alert("Please wait 15 seconds after checking in to check out.");
-                                    }
-                                });
                             } else {
                                 alert("You are not within 2 miles of the specified location. Check-in not allowed.");
                             }
@@ -157,7 +138,12 @@
                     alert("Please wait 15 seconds before checking in again.");
                 }
             } else {
-                // Check-out logic removed from here
+                checkedIn = false; // User checks out
+                localStorage.removeItem(localStorageKey);
+                updateStatus("Checked Out");
+                toggleCheckInButton.textContent = "Check In";
+                lastCheckOutTime = Date.now();
+                socket.emit('checkOut'); // Emit the 'checkOut' event to decrease count
             }
         });
 
