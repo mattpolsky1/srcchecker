@@ -22,6 +22,26 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath);
 });
 
+// Include your Google Maps API key here
+const apiKey = 'AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs';
+
+// Middleware to calculate distance between two coordinates
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the Earth in kilometers
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+    Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c; // Distance in kilometers
+
+  // Convert distance to miles
+  return distance * 0.621371;
+}
+
 function updatePeopleCount() {
     const currentTime = Date.now();
     if (currentTime - lastCheckInTime >= 8 * 60 * 60 * 1000) {
@@ -30,13 +50,34 @@ function updatePeopleCount() {
     }
 }
 
+// Target location coordinates (35.90927, -79.04746)
+const targetLatitude = 35.90927;
+const targetLongitude = -79.04746;
+
 io.on('connection', (socket) => {
     socket.emit('updateCount', totalCheckIns);
 
-    socket.on('checkIn', () => {
-        updatePeopleCount();
-        totalCheckIns++;
-        io.emit('updateCount', totalCheckIns);
+    socket.on('checkIn', (data) => {
+        const userLatitude = parseFloat(data.latitude);
+        const userLongitude = parseFloat(data.longitude);
+
+        // Calculate the distance between the user's location and the target location
+        const distance = calculateDistance(
+            userLatitude,
+            userLongitude,
+            targetLatitude,
+            targetLongitude
+        );
+
+        // Check if the user is within 1 mile of the target location
+        if (distance <= 1) {
+            updatePeopleCount();
+            totalCheckIns++;
+            io.emit('updateCount', totalCheckIns);
+        } else {
+            // Inform the user that they are not within 1 mile of the target location.
+            socket.emit('checkInFailed', 'You are not within 1 mile of the target location.');
+        }
     });
 
     socket.on('checkOut', () => {
