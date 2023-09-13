@@ -71,12 +71,13 @@ io.on('connection', (socket) => {
 
         // Check if the user is within 1 mile of the target location
         if (distance <= 1) {
+            // Increment the count only if the check-in is successful
             updatePeopleCount();
             totalCheckIns++;
             io.emit('updateCount', totalCheckIns);
         } else {
             // Inform the user that they are not within 1 mile of the target location.
-            socket.emit('checkInFailed', 'You are not within 1 mile of the target location.');
+            socket.emit('checkInFailed', 'You are not within 1 mile of SRC (Student Recreation Center). Check-in not allowed.');
         }
     });
 
