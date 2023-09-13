@@ -42,17 +42,11 @@ io.on('connection', (socket) => {
         socket.emit('alreadyCheckedIn');
     }
 
-    // Handle the event to get the current check-in status and count
-    socket.on('getCurrentStatus', (callback) => {
-        const checkInStatus = localStorage.getItem(socket.id) === 'true';
-        callback({ checkedIn: checkInStatus, totalCheckIns });
-    });
-
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
 
         // Check if the user is already checked in
-        if (localStorage.getItem(socket.id) === 'true') {
+        if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
         } else {
             // Check if geolocation data is available
@@ -63,8 +57,8 @@ io.on('connection', (socket) => {
 
                 // Check if the user is within 2 miles of the target location (3218.69 meters)
                 if (distance <= 3218.69) {
-                    // Mark the user as checked in and store their status in localStorage
-                    localStorage.setItem(socket.id, 'true');
+                    // Mark the user as checked in and store their socket ID
+                    checkedInUsers.set(socket.id, true);
                     totalCheckIns++;
                     io.emit('updateCount', totalCheckIns);
                 } else {
@@ -80,9 +74,9 @@ io.on('connection', (socket) => {
 
     socket.on('checkOut', () => {
         // Check if the user is checked in and has a valid socket ID
-        if (localStorage.getItem(socket.id) === 'true') {
+        if (checkedInUsers.has(socket.id)) {
             totalCheckIns--; // Decrement the totalCheckIns count
-            localStorage.removeItem(socket.id); // Remove the user's check-in status
+            checkedInUsers.delete(socket.id);
             io.emit('updateCount', totalCheckIns);
         }
     });
