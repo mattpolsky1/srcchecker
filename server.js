@@ -35,8 +35,6 @@ io.on('connection', (socket) => {
 
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
-        totalCheckIns++;
-        socket.checkInTime = Date.now()
 
         // Check if geolocation data is available
         if (userLocation && userLocation.latitude && userLocation.longitude) {
@@ -47,7 +45,7 @@ io.on('connection', (socket) => {
             // Check if the user is within 2 miles of the target location (3218.69 meters)
             if (distance <= 3218.69) {
                 totalCheckIns++;
-                io.emit('updateCount', totalCheckIns);
+                io.emit('updateCount', totalCheckIns); // Emit the event here for a valid check-in
             } else {
                 // Notify the client that check-in is not allowed
                 socket.emit('checkInNotAllowed');
@@ -65,6 +63,7 @@ io.on('connection', (socket) => {
         }
     });
 });
+
 
 function getDistance(location1, location2) {
     // Haversine formula to calculate distance between two points on the Earth's surface
