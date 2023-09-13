@@ -155,6 +155,10 @@
             alert('You are not within 2 miles of the specified location. Check-in not allowed.');
         });
 
+        socket.on('alreadyCheckedIn', () => {
+            alert('You are already checked in.');
+        });
+
         function updateCount(count) {
             peopleAtGymElement.textContent = count;
             updateGymStatus(count);
@@ -203,10 +207,6 @@
     </script>
 </body>
 </html>
-
-
-
-
 
 
 
