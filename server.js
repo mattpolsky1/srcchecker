@@ -35,7 +35,7 @@ function updatePeopleCount() {
 
 io.on('connection', (socket) => {
     // Emit the current totalCheckIns count to the newly connected user
-    socket.emit('updateCount', totalCheckIns);
+    socket.emit('initialCount', totalCheckIns);
 
     // Check if the user is already checked in based on their socket ID
     if (checkedInUsers.has(socket.id)) {
@@ -112,6 +112,7 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
