@@ -75,7 +75,7 @@ io.on('connection', (socket) => {
     socket.on('checkOut', () => {
         // Check if the user is checked in and has a valid socket ID
         if (checkedInUsers.has(socket.id)) {
-            totalCheckIns--;
+            totalCheckIns--; // Decrement the totalCheckIns count
             checkedInUsers.delete(socket.id);
             io.emit('updateCount', totalCheckIns);
         }
@@ -112,6 +112,8 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+
 
 
 
