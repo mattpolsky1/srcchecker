@@ -105,6 +105,7 @@
         // Event listener for the Check-In button
         toggleCheckInButton.addEventListener("click", () => {
             if (!checkedIn) {
+
                 const currentTime = Date.now();
                 if (currentTime - lastCheckOutTime >= 15000) { // 15-second cooldown
                     checkedIn = true; // User checks in
@@ -142,9 +143,14 @@
             updateCount(count);
         });
 
-        socket.on('checkInNotAllowed', () => {
-            alert('You are not within 2 miles of the specified location. Check-in not allowed.');
-        });
+       socket.on('checkInNotAllowed', () => {
+    alert('You are not within 2 miles of the specified location. Check-in not allowed.');
+    checkedIn = false; // Reset the user's status to "checked out"
+    localStorage.removeItem(localStorageKey);
+    updateStatus("Checked Out");
+    toggleCheckInButton.textContent = "Check In";
+});
+
 
         function updateCount(count) {
             peopleAtGymElement.textContent = count;
