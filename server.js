@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
+const session = require('express-session');
 
 const app = express();
 const server = http.createServer(app);
@@ -15,6 +16,16 @@ const publicPath = path.join(__dirname, 'Public');
 
 // Serve static files from the "Public" directory
 app.use(express.static(publicPath));
+
+// Use express-session middleware
+app.use(session({
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        maxAge: 15 * 1000, // 15 seconds in milliseconds
+    },
+}));
 
 // Route handler for the root URL ("/")
 app.get('/', (req, res) => {
@@ -30,25 +41,19 @@ function updatePeopleCount() {
     }
 }
 
-// ...
-
 io.on('connection', (socket) => {
     socket.emit('updateCount', totalCheckIns);
-
-    // Check if the user has already checked in (using localStorage)
-    if (localStorage.getItem('checkedIn')) {
-        socket.emit('checkInNotAllowed');
-    }
 
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
 
-        // Check if the user has already checked in (using localStorage)
-        if (localStorage.getItem('checkedIn')) {
-            socket.emit('checkInNotAllowed');
-        } else {
-            // Check if geolocation data is available
-            if (userLocation && userLocation.latitude && userLocation.longitude) {
+        // Check if geolocation data is available
+        if (userLocation && userLocation.latitude && userLocation.longitude) {
+            // Check if the user has an active session (checked in)
+            if (socket.handshake.session.checkedIn) {
+                // Notify the client that check-in is not allowed
+                socket.emit('checkInNotAllowed');
+            } else {
                 // Calculate the distance between user's location and the target location
                 const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                 const distance = getDistance(userLocation, targetLocation);
@@ -58,31 +63,31 @@ io.on('connection', (socket) => {
                     totalCheckIns++;
                     io.emit('updateCount', totalCheckIns);
 
-                    // Set a flag in localStorage to indicate that the user has checked in
-                    localStorage.setItem('checkedIn', 'true');
+                    // Set the session to mark the user as checked in
+                    socket.handshake.session.checkedIn = true;
+                    socket.handshake.session.save();
                 } else {
                     // Notify the client that check-in is not allowed
                     socket.emit('checkInNotAllowed');
                 }
-            } else {
-                // Handle the case where geolocation data is not available
-                socket.emit('checkInNotAllowed');
             }
+        } else {
+            // Handle the case where geolocation data is not available
+            socket.emit('checkInNotAllowed');
         }
     });
 
     socket.on('checkOut', () => {
-        if (localStorage.getItem('checkedIn')) {
+        if (socket.handshake.session.checkedIn) {
             totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
 
-            // Remove the 'checkedIn' flag from localStorage to mark the user as checked out
-            localStorage.removeItem('checkedIn');
+            // Clear the session to mark the user as checked out
+            socket.handshake.session.checkedIn = false;
+            socket.handshake.session.save();
         }
     });
 });
-
-
 
 function getDistance(location1, location2) {
     // Haversine formula to calculate distance between two points on the Earth's surface
@@ -114,5 +119,6 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 
