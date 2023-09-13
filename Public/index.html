@@ -105,8 +105,14 @@
         // Event listener for the Check-In button
         toggleCheckInButton.addEventListener("click", () => {
             if (!checkedIn) {
+                
                 const currentTime = Date.now();
                 if (currentTime - lastCheckOutTime >= 15000) { // 15-second cooldown
+                    checkedIn = true; // User checks in
+                    localStorage.setItem(localStorageKey, "checkedIn");
+                    updateStatus("Checked In");
+                    toggleCheckInButton.textContent = "Check Out";
+                    
                     // Get the user's location and send it to the server
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition((position) => {
@@ -142,10 +148,8 @@
         });
 
         function updateCount(count) {
-            if (checkedIn) {
-                peopleAtGymElement.textContent = count;
-                updateGymStatus(count);
-            }
+            peopleAtGymElement.textContent = count;
+            updateGymStatus(count);
         }
 
         function updateStatus(status) {
@@ -166,7 +170,6 @@
     </script>
 </body>
 </html>
-
 
 
 
