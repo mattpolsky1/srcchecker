@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
+const session = require('express-session');
 
 const app = express();
 const server = http.createServer(app);
@@ -15,6 +16,16 @@ const publicPath = path.join(__dirname, 'Public');
 
 // Serve static files from the "Public" directory
 app.use(express.static(publicPath));
+
+// Use express-session middleware
+app.use(session({
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        maxAge: 15 * 1000, // 15 seconds in milliseconds
+    },
+}));
 
 // Route handler for the root URL ("/")
 app.get('/', (req, res) => {
@@ -38,17 +49,27 @@ io.on('connection', (socket) => {
 
         // Check if geolocation data is available
         if (userLocation && userLocation.latitude && userLocation.longitude) {
-            // Calculate the distance between user's location and the target location
-            const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
-            const distance = getDistance(userLocation, targetLocation);
-
-            // Check if the user is within 2 miles of the target location (3218.69 meters)
-            if (distance <= 3218.69) {
-                totalCheckIns++;
-                io.emit('updateCount', totalCheckIns);
-            } else {
+            // Check if the user has an active session (checked in)
+            if (socket.handshake.session.checkedIn) {
                 // Notify the client that check-in is not allowed
                 socket.emit('checkInNotAllowed');
+            } else {
+                // Calculate the distance between user's location and the target location
+                const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
+                const distance = getDistance(userLocation, targetLocation);
+
+                // Check if the user is within 2 miles of the target location (3218.69 meters)
+                if (distance <= 3218.69) {
+                    totalCheckIns++;
+                    io.emit('updateCount', totalCheckIns);
+
+                    // Set the session to mark the user as checked in
+                    socket.handshake.session.checkedIn = true;
+                    socket.handshake.session.save();
+                } else {
+                    // Notify the client that check-in is not allowed
+                    socket.emit('checkInNotAllowed');
+                }
             }
         } else {
             // Handle the case where geolocation data is not available
@@ -57,9 +78,13 @@ io.on('connection', (socket) => {
     });
 
     socket.on('checkOut', () => {
-        if (totalCheckIns > 0) {
+        if (socket.handshake.session.checkedIn) {
             totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
+
+            // Clear the session to mark the user as checked out
+            socket.handshake.session.checkedIn = false;
+            socket.handshake.session.save();
         }
     });
 });
@@ -94,4 +119,5 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
