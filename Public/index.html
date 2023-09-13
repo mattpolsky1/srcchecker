@@ -91,7 +91,7 @@
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const peopleAtGymElement = document.getElementById("peopleAtGym");
+       const peopleAtGymElement = document.getElementById("peopleAtGym");
         const toggleCheckInButton = document.getElementById("toggleCheckInButton");
         const statusLabel = document.getElementById("statusLabel");
         const gymStatusLabel = document.getElementById("gymStatusLabel");
@@ -102,10 +102,17 @@
         let lastCheckOutTime = 0; // Timestamp for the last check-out
         const localStorageKey = "checkInStatus";
 
+        // Check local storage for check-in status
+        const savedCheckInStatus = localStorage.getItem(localStorageKey);
+        if (savedCheckInStatus === "checkedIn") {
+            checkedIn = true;
+            toggleCheckInButton.textContent = "Check Out";
+            updateStatus("Checked In");
+        }
+
         // Event listener for the Check-In button
         toggleCheckInButton.addEventListener("click", () => {
             if (!checkedIn) {
-                
                 const currentTime = Date.now();
                 if (currentTime - lastCheckOutTime >= 15000) { // 15-second cooldown
                     // Get the user's location and send it to the server
