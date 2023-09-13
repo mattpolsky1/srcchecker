@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Welcome to SRC Checker!</title>
+    <title>Gym Attendance</title>
     <style>
         body {
             font-family: 'Gotham Bold', Arial, sans-serif;
@@ -79,23 +79,15 @@
             bottom: 10px;
             left: 10px;
         }
-        
-        #map {
-            width: 100%; /* Adjust the map's width as needed */
-            height: 300px; /* Adjust the map's height as needed */
-        }
     </style>
 </head>
 <body>
-    <h1>Welcome to SRC Checker!</h1>
     <h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
     <div id="status">Status: <span id="statusLabel">Checked Out</span></div>
     <div id="gymStatus">Gym Status: <span id="gymStatusLabel">Empty</span></div>
     <button id="toggleCheckInButton" class="checkIn">Check In</button>
     <div id="logo">CampusHoops &copy; 2023</div>
 
-    <!-- Include the Google Maps JavaScript API with your API key -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=geometry"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const peopleAtGymElement = document.getElementById("peopleAtGym");
@@ -104,7 +96,7 @@
         const gymStatusLabel = document.getElementById("gymStatusLabel");
 
         const socket = io();
-        let map; // The Google Maps map instance
+
         let checkedIn = false; // Initially, the user is not checked in
         let lastCheckOutTime = 0; // Timestamp for the last check-out
         const localStorageKey = "checkInStatus";
@@ -130,39 +122,14 @@
             }
         }
 
-        // Function to get the user's location using Google Maps Geolocation API
-        function getUserLocation() {
-            const geocoder = new google.maps.Geocoder();
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const userLatitude = position.coords.latitude;
-                    const userLongitude = position.coords.longitude;
-
-                    // Create a LatLng object for the user's location
-                    const userLocation = new google.maps.LatLng(userLatitude, userLongitude);
-
-                    // Calculate the distance between user's location and the target location
-                    const targetLocation = new google.maps.LatLng(35.90927, -79.04746);
-                    const distance = google.maps.geometry.spherical.computeDistanceBetween(userLocation, targetLocation);
-
-                    // Check if the user is within 1 mile of the target location (1609.34 meters)
-                    if (distance <= 1609.34) {
-                        // Send userLatitude and userLongitude to the server when checking in
-                        socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
-                    } else {
-                        alert('You are not within 1 mile of the specified location. Check-in not allowed.');
-                    }
-                }, (error) => {
-                    console.error('Error getting user location:', error);
-                    alert('Error getting your location. Please check your browser settings and try again.');
-                });
-            } else {
-                alert('Geolocation is not supported by your browser.');
-            }
+        // Check local storage for previous check-in status
+        const previousCheckInStatus = localStorage.getItem(localStorageKey);
+        if (previousCheckInStatus === "checkedIn") {
+            checkedIn = true; // User was previously checked in
+            updateStatus("Checked In");
+            toggleCheckInButton.textContent = "Check Out";
         }
 
-        // Event listener for the Check-In button
         toggleCheckInButton.addEventListener("click", () => {
             if (!checkedIn) {
                 const currentTime = Date.now();
@@ -171,9 +138,7 @@
                     localStorage.setItem(localStorageKey, "checkedIn");
                     updateStatus("Checked In");
                     toggleCheckInButton.textContent = "Check Out";
-
-                    // Get the user's location and send it to the server
-                    getUserLocation();
+                    socket.emit('checkIn'); // Emit the 'checkIn' event to increase count
                 } else {
                     alert("Please wait 15 seconds before checking in again.");
                 }
@@ -187,20 +152,12 @@
             }
         });
 
-        // Initialize the Google Maps map
-        function initMap() {
-            const mapOptions = {
-                center: { lat: 35.90927, lng: -79.04746 },
-                zoom: 16 // You can adjust the initial zoom level
-            };
-            map = new google.maps.Map(document.getElementById("map"), mapOptions);
-        }
-
         socket.on('updateCount', (count) => {
             updateCount(count);
-       
-
-
+        });
+    </script>
+</body>
+</html>
 
 
 
