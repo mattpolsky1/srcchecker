@@ -96,16 +96,14 @@
         const statusLabel = document.getElementById("statusLabel");
         const gymStatusLabel = document.getElementById("gymStatusLabel");
 
-        const socket = io();
+        const socket = io({ query: { checkedIn: localStorage.getItem('checkInStatus') === 'true' } });
 
-        let checkedIn = false; // Initially, the user is not checked in
-        let lastCheckOutTime = 0; // Timestamp for the last check-out
-        const localStorageKey = "checkInStatus";
+        let checkedIn = socket.handshake.query.checkedIn === 'true';
+        let lastCheckOutTime = 0;
 
         // Event listener for the Check-In button
         toggleCheckInButton.addEventListener("click", () => {
             if (!checkedIn) {
-                
                 const currentTime = Date.now();
                 if (currentTime - lastCheckOutTime >= 15000) { // 15-second cooldown
                     // Get the user's location and send it to the server
@@ -120,7 +118,7 @@
 
                             if (distance <= 3218.69) { // Within 2 miles
                                 checkedIn = true; // User checks in
-                                localStorage.setItem(localStorageKey, "checkedIn");
+                                localStorage.setItem('checkInStatus', 'true');
                                 updateStatus("Checked In");
                                 toggleCheckInButton.textContent = "Check Out";
                                 socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
@@ -129,7 +127,7 @@
                             }
                         }, (error) => {
                             console.error('Error getting user location:', error);
-                            alert('Error getting your location or you are too far from the specified location. Please check your browser settings and try again.');
+                            alert('Error getting your location. Please check your web settings and try again.');
                         });
                     } else {
                         alert('Geolocation is not supported by your browser.');
@@ -139,7 +137,7 @@
                 }
             } else {
                 checkedIn = false; // User checks out
-                localStorage.removeItem(localStorageKey);
+                localStorage.setItem('checkInStatus', 'false');
                 updateStatus("Checked Out");
                 toggleCheckInButton.textContent = "Check In";
                 lastCheckOutTime = Date.now();
@@ -203,6 +201,7 @@
     </script>
 </body>
 </html>
+
 
 
 

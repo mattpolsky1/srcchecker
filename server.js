@@ -35,24 +35,33 @@ io.on('connection', (socket) => {
 
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
+        
+        // Check if the user has already checked in via local storage
+        if (socket.handshake.query.checkedIn === 'true') {
+            // Notify the client that check-in is not allowed
+            socket.emit('checkInNotAllowed');
+        } else {
+            // Set the checked-in status in the socket's query
+            socket.handshake.query.checkedIn = 'true';
 
-        // Check if geolocation data is available
-        if (userLocation && userLocation.latitude && userLocation.longitude) {
-            // Calculate the distance between user's location and the target location
-            const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
-            const distance = getDistance(userLocation, targetLocation);
+            // Check if geolocation data is available
+            if (userLocation && userLocation.latitude && userLocation.longitude) {
+                // Calculate the distance between user's location and the target location
+                const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
+                const distance = getDistance(userLocation, targetLocation);
 
-            // Check if the user is within 2 miles of the target location (3218.69 meters)
-            if (distance <= 3218.69) {
-                totalCheckIns++;
-                io.emit('updateCount', totalCheckIns);
+                // Check if the user is within 2 miles of the target location (3218.69 meters)
+                if (distance <= 3218.69) {
+                    totalCheckIns++;
+                    io.emit('updateCount', totalCheckIns);
+                } else {
+                    // Notify the client that check-in is not allowed
+                    socket.emit('checkInNotAllowed');
+                }
             } else {
-                // Notify the client that check-in is not allowed
+                // Handle the case where geolocation data is not available
                 socket.emit('checkInNotAllowed');
             }
-        } else {
-            // Handle the case where geolocation data is not available
-            socket.emit('checkInNotAllowed');
         }
     });
 
@@ -61,6 +70,9 @@ io.on('connection', (socket) => {
             totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
         }
+        
+        // Clear the checked-in status in the socket's query
+        socket.handshake.query.checkedIn = 'false';
     });
 });
 
@@ -94,5 +106,8 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+
+
 
 
