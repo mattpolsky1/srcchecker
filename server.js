@@ -44,14 +44,15 @@ io.on('connection', (socket) => {
 
     // Handle the event to get the current check-in status and count
     socket.on('getCurrentStatus', (callback) => {
-        callback({ checkedIn: checkedInUsers.has(socket.id), totalCheckIns });
+        const checkInStatus = localStorage.getItem(socket.id) === 'true';
+        callback({ checkedIn: checkInStatus, totalCheckIns });
     });
 
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
 
         // Check if the user is already checked in
-        if (checkedInUsers.has(socket.id)) {
+        if (localStorage.getItem(socket.id) === 'true') {
             socket.emit('alreadyCheckedIn');
         } else {
             // Check if geolocation data is available
@@ -62,8 +63,8 @@ io.on('connection', (socket) => {
 
                 // Check if the user is within 2 miles of the target location (3218.69 meters)
                 if (distance <= 3218.69) {
-                    // Mark the user as checked in and store their socket ID
-                    checkedInUsers.set(socket.id, true);
+                    // Mark the user as checked in and store their status in localStorage
+                    localStorage.setItem(socket.id, 'true');
                     totalCheckIns++;
                     io.emit('updateCount', totalCheckIns);
                 } else {
@@ -79,9 +80,9 @@ io.on('connection', (socket) => {
 
     socket.on('checkOut', () => {
         // Check if the user is checked in and has a valid socket ID
-        if (checkedInUsers.has(socket.id)) {
+        if (localStorage.getItem(socket.id) === 'true') {
             totalCheckIns--; // Decrement the totalCheckIns count
-            checkedInUsers.delete(socket.id);
+            localStorage.removeItem(socket.id); // Remove the user's check-in status
             io.emit('updateCount', totalCheckIns);
         }
     });
@@ -117,6 +118,7 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 

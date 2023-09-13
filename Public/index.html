@@ -100,7 +100,6 @@
 
         let checkedIn = false;
         let lastCheckOutTime = 0;
-        const localStorageKey = "checkInStatus";
 
         // Retrieve the current check-in status and count from the server
         socket.emit('getCurrentStatus', (data) => {
@@ -124,7 +123,7 @@
 
                             if (distance <= 3218.69) { // Within 2 miles
                                 checkedIn = true;
-                                localStorage.setItem(localStorageKey, "checkedIn");
+                                localStorage.setItem(socket.id, 'true');
                                 updateStatus("Checked In");
                                 toggleCheckInButton.textContent = "Check Out";
                                 socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
@@ -143,7 +142,7 @@
                 }
             } else {
                 checkedIn = false;
-                localStorage.removeItem(localStorageKey);
+                localStorage.removeItem(socket.id);
                 updateStatus("Checked Out");
                 toggleCheckInButton.textContent = "Check In";
                 lastCheckOutTime = Date.now();
@@ -206,6 +205,7 @@
     </script>
 </body>
 </html>
+
 
 
 
