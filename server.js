@@ -33,21 +33,10 @@ function updatePeopleCount() {
 io.on('connection', (socket) => {
     socket.emit('updateCount', totalCheckIns);
 
-    socket.on('checkIn', (userLocation) => {
+    socket.on('checkIn', () => {
         updatePeopleCount();
-
-        // Calculate the distance between user's location and the target location
-        const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
-        const distance = getDistance(userLocation, targetLocation);
-
-        // Check if the user is within 1 mile of the target location (1609.34 meters)
-        if (distance <= 1609.34) {
-            totalCheckIns++;
-            io.emit('updateCount', totalCheckIns);
-        } else {
-            // Notify the client that check-in is not allowed
-            socket.emit('checkInNotAllowed');
-        }
+        totalCheckIns++;
+        io.emit('updateCount', totalCheckIns);
     });
 
     socket.on('checkOut', () => {
@@ -57,31 +46,6 @@ io.on('connection', (socket) => {
         }
     });
 });
-
-function getDistance(location1, location2) {
-    // Haversine formula to calculate distance between two points on the Earth's surface
-    const R = 6371; // Radius of the Earth in kilometers
-    const lat1 = location1.latitude;
-    const lon1 = location1.longitude;
-    const lat2 = location2.latitude;
-    const lon2 = location2.longitude;
-
-    const dLat = toRadians(lat2 - lat1);
-    const dLon = toRadians(lon2 - lon1);
-
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in kilometers
-
-    return distance * 1000; // Convert to meters
-}
-
-function toRadians(degrees) {
-    return degrees * (Math.PI / 180);
-}
 
 const PORT = process.env.PORT || 8080;
 

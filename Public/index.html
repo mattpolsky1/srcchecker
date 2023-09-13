@@ -79,6 +79,11 @@
             bottom: 10px;
             left: 10px;
         }
+
+        #map {
+            width: 100%; /* Adjust the map's width as needed */
+            height: 300px; /* Adjust the map's height as needed */
+        }
     </style>
 </head>
 <body>
@@ -88,6 +93,7 @@
     <button id="toggleCheckInButton" class="checkIn">Check In</button>
     <div id="logo">CampusHoops &copy; 2023</div>
 
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const peopleAtGymElement = document.getElementById("peopleAtGym");
@@ -130,6 +136,38 @@
             toggleCheckInButton.textContent = "Check Out";
         }
 
+        // Function to get the user's location using Google Maps Geolocation API
+        function getUserLocation() {
+            const geocoder = new google.maps.Geocoder();
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userLatitude = position.coords.latitude;
+                    const userLongitude = position.coords.longitude;
+
+                    // Create a LatLng object for the user's location
+                    const userLocation = new google.maps.LatLng(userLatitude, userLongitude);
+
+                    // Calculate the distance between user's location and the target location
+                    const targetLocation = new google.maps.LatLng(35.90927, -79.04746);
+                    const distance = google.maps.geometry.spherical.computeDistanceBetween(userLocation, targetLocation);
+
+                    // Check if the user is within 2 miles of the target location (3218.69 meters)
+                    if (distance <= 3218.69) {
+                        // Send userLatitude and userLongitude to the server when checking in
+                        socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
+                    } else {
+                        alert('You are not within 2 miles of the specified location. Check-in not allowed.');
+                    }
+                }, (error) => {
+                    console.error('Error getting user location:', error);
+                    alert('Error getting your location. Please check your browser settings and try again.');
+                });
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
+        }
+
         toggleCheckInButton.addEventListener("click", () => {
             if (!checkedIn) {
                 const currentTime = Date.now();
@@ -138,7 +176,8 @@
                     localStorage.setItem(localStorageKey, "checkedIn");
                     updateStatus("Checked In");
                     toggleCheckInButton.textContent = "Check Out";
-                    socket.emit('checkIn'); // Emit the 'checkIn' event to increase count
+                    // Get the user's location and send it to the server
+                    getUserLocation();
                 } else {
                     alert("Please wait 15 seconds before checking in again.");
                 }
@@ -158,7 +197,3 @@
     </script>
 </body>
 </html>
-
-
-
-
