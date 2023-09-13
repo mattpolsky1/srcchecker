@@ -68,6 +68,10 @@
             display: block;
         }
 
+        button.checkOut.hidden {
+            display: none;
+        }
+
         button:hover {
             background-color: #0056b3;
         }
@@ -86,6 +90,7 @@
     <div id="status">Status: <span id="statusLabel">Checked Out</span></div>
     <div id="gymStatus">Gym Status: <span id="gymStatusLabel">Empty</span></div>
     <button id="toggleCheckInButton" class="checkIn">Check In</button>
+    <button id="checkOutButton" class="checkOut hidden">Check Out</button>
     <div id="logo">CampusHoops &copy; 2023</div>
 
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry"></script>
@@ -93,6 +98,7 @@
     <script>
         const peopleAtGymElement = document.getElementById("peopleAtGym");
         const toggleCheckInButton = document.getElementById("toggleCheckInButton");
+        const checkOutButton = document.getElementById("checkOutButton");
         const statusLabel = document.getElementById("statusLabel");
         const gymStatusLabel = document.getElementById("gymStatusLabel");
 
@@ -113,6 +119,11 @@
                             const userLatitude = position.coords.latitude;
                             const userLongitude = position.coords.longitude;
                             socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
+                            checkedIn = true; // User checks in
+                            localStorage.setItem(localStorageKey, "checkedIn");
+                            updateStatus("Checked In");
+                            toggleCheckInButton.style.display = "none";
+                            checkOutButton.style.display = "block";
                         }, (error) => {
                             console.error('Error getting user location:', error);
                             alert('Error getting your location. Please check your browser settings and try again.');
@@ -123,11 +134,16 @@
                 } else {
                     alert("Please wait 15 seconds before checking in again.");
                 }
-            } else {
+            }
+        });
+
+        checkOutButton.addEventListener("click", () => {
+            if (checkedIn) {
                 checkedIn = false; // User checks out
                 localStorage.removeItem(localStorageKey);
                 updateStatus("Checked Out");
-                toggleCheckInButton.textContent = "Check In";
+                toggleCheckInButton.style.display = "block";
+                checkOutButton.style.display = "none";
                 lastCheckOutTime = Date.now();
                 socket.emit('checkOut'); // Emit the 'checkOut' event to decrease count
             }
@@ -164,6 +180,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
