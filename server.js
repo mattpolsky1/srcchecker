@@ -12,7 +12,7 @@ let totalCheckIns = 0;
 let lastCheckInTime = 0;
 
 // Define the path to your static files directory
-const publicPath = path.join(__dirname, 'Public');
+const publicPath = path.join(__dirname, 'public');
 
 // Serve static files from the "Public" directory
 app.use(express.static(publicPath));
