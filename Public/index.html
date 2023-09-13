@@ -96,14 +96,16 @@
         const statusLabel = document.getElementById("statusLabel");
         const gymStatusLabel = document.getElementById("gymStatusLabel");
 
-        const socket = io({ query: { checkedIn: localStorage.getItem('checkInStatus') === 'true' } });
+        const socket = io();
 
-        let checkedIn = socket.handshake.query.checkedIn === 'true';
-        let lastCheckOutTime = 0;
+        let checkedIn = false; // Initially, the user is not checked in
+        let lastCheckOutTime = 0; // Timestamp for the last check-out
+        const localStorageKey = "checkInStatus";
 
         // Event listener for the Check-In button
         toggleCheckInButton.addEventListener("click", () => {
             if (!checkedIn) {
+                
                 const currentTime = Date.now();
                 if (currentTime - lastCheckOutTime >= 15000) { // 15-second cooldown
                     // Get the user's location and send it to the server
@@ -118,7 +120,7 @@
 
                             if (distance <= 3218.69) { // Within 2 miles
                                 checkedIn = true; // User checks in
-                                localStorage.setItem('checkInStatus', 'true');
+                                localStorage.setItem(localStorageKey, "checkedIn");
                                 updateStatus("Checked In");
                                 toggleCheckInButton.textContent = "Check Out";
                                 socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
@@ -137,7 +139,7 @@
                 }
             } else {
                 checkedIn = false; // User checks out
-                localStorage.setItem('checkInStatus', 'false');
+                localStorage.removeItem(localStorageKey);
                 updateStatus("Checked Out");
                 toggleCheckInButton.textContent = "Check In";
                 lastCheckOutTime = Date.now();
@@ -201,7 +203,6 @@
     </script>
 </body>
 </html>
-
 
 
 
