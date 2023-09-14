@@ -111,35 +111,20 @@
             updateStatus("Checked In");
         }
 
-       // Event listener for when the page is fully loaded
-// Event listener for when the page is fully loaded
-document.addEventListener("DOMContentLoaded", () => {
-    // Request the user's check-in status from the server
-    socket.emit('requestCheckInStatus');
+        // Event listener for when the page is fully loaded
+        document.addEventListener("DOMContentLoaded", () => {
+            // Request the user's check-in status from the server
+            socket.emit('requestCheckInStatus');
 
-    // Event listener for when the server responds with the user's check-in status
-    socket.on('responseCheckInStatus', (checkInStatus) => {
-        if (checkInStatus === "checkedIn") {
-            checkedIn = true;
-            toggleCheckInButton.textContent = "Check Out";
-            updateStatus("Checked In");
-        } else {
-            checkedIn = false;
-            toggleCheckInButton.textContent = "Check In";
-            updateStatus("Checked Out");
-        }
-    });
-
-    // Event listener for before refreshing the page
-    window.addEventListener("beforeunload", () => {
-        if (checkedIn) {
-            // Send a "checkOut" message to the server before refreshing
-            socket.emit('checkOut');
-        }
-    });
-});
-
-
+            // Event listener for when the server responds with the user's check-in status
+            socket.on('responseCheckInStatus', (checkInStatus) => {
+                if (checkInStatus === "checkedIn") {
+                    checkedIn = true;
+                    toggleCheckInButton.textContent = "Check Out";
+                    updateStatus("Checked In");
+                }
+            });
+        });
 
         // Event listener for the Check-In button
         toggleCheckInButton.addEventListener("click", () => {
