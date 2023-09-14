@@ -25,14 +25,6 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath);
 });
 
-function updatePeopleCount() {
-    const currentTime = Date.now();
-    if (currentTime - lastCheckInTime >= 8 * 60 * 60 * 1000) {
-        lastCheckInTime = currentTime;
-        totalCheckIns = 0;
-    }
-}
-
 io.on('connection', (socket) => {
     // Emit the current totalCheckIns count to the newly connected user
     socket.emit('updateCount', totalCheckIns);
@@ -43,15 +35,13 @@ io.on('connection', (socket) => {
     }
 
     socket.on('checkIn', (userLocation) => {
-        updatePeopleCount();
-
         // Check if the user is already checked in
         if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
         } else {
             // Check if geolocation data is available
             if (userLocation && userLocation.latitude && userLocation.longitude) {
-                // Calculate the distance between user's location and the target location
+                // Calculate the distance between the user's location and the target location
                 const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                 const distance = getDistance(userLocation, targetLocation);
 
@@ -59,8 +49,8 @@ io.on('connection', (socket) => {
                 if (distance <= 3218.69) {
                     // Mark the user as checked in and store their socket ID
                     checkedInUsers.set(socket.id, true);
-                    totalCheckIns++;
-                    io.emit('updateCount', totalCheckIns);
+                    totalCheckIns++; // Increment the totalCheckIns count
+                    io.emit('updateCount', totalCheckIns); // Notify all clients
                 } else {
                     // Notify the client that check-in is not allowed
                     socket.emit('checkInNotAllowed');
@@ -75,13 +65,12 @@ io.on('connection', (socket) => {
     socket.on('checkOut', () => {
         // Check if the user is checked in and has a valid socket ID
         if (checkedInUsers.has(socket.id)) {
-            totalCheckIns--; // Decrement the totalCheckIns count
+            // Mark the user as checked out and decrement the totalCheckIns count
             checkedInUsers.delete(socket.id);
-            io.emit('updateCount', totalCheckIns);
+            totalCheckIns--; // Decrement the totalCheckIns count
+            io.emit('updateCount', totalCheckIns); // Notify all clients
         }
     });
-    
-    
 });
 
 // Haversine formula to calculate distance between two points on the Earth's surface
@@ -104,6 +93,7 @@ function getDistance(location1, location2) {
 
     return distance * 1000; // Convert to meters
 }
+
 
 // Function to convert degrees to radians
 function toRadians(degrees) {
