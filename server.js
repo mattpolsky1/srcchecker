@@ -80,6 +80,7 @@ io.on('connection', (socket) => {
             io.emit('updateCount', totalCheckIns);
         }
     });
+    
 });
 
 // Haversine formula to calculate distance between two points on the Earth's surface
