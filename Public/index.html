@@ -112,6 +112,7 @@
         }
 
        // Event listener for when the page is fully loaded
+// Event listener for when the page is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
     // Request the user's check-in status from the server
     socket.emit('requestCheckInStatus');
@@ -128,7 +129,16 @@ document.addEventListener("DOMContentLoaded", () => {
             updateStatus("Checked Out");
         }
     });
+
+    // Event listener for before refreshing the page
+    window.addEventListener("beforeunload", () => {
+        if (checkedIn) {
+            // Send a "checkOut" message to the server before refreshing
+            socket.emit('checkOut');
+        }
+    });
 });
+
 
 
         // Event listener for the Check-In button
