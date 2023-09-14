@@ -82,8 +82,8 @@ io.on('connection', (socket) => {
     });
 });
 
+// Haversine formula to calculate distance between two points on the Earth's surface
 function getDistance(location1, location2) {
-    // Haversine formula to calculate distance between two points on the Earth's surface
     const R = 6371; // Radius of the Earth in kilometers
     const lat1 = location1.latitude;
     const lon1 = location1.longitude;
@@ -103,6 +103,7 @@ function getDistance(location1, location2) {
     return distance * 1000; // Convert to meters
 }
 
+// Function to convert degrees to radians
 function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
@@ -112,6 +113,7 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 

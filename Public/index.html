@@ -89,6 +89,7 @@
     <div id="logo">CampusHoops &copy; 2023</div>
 
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry"></script>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const peopleAtGymElement = document.getElementById("peopleAtGym");
@@ -109,6 +110,21 @@
             toggleCheckInButton.textContent = "Check Out";
             updateStatus("Checked In");
         }
+
+        // Event listener for when the page is fully loaded
+        document.addEventListener("DOMContentLoaded", () => {
+            // Request the user's check-in status from the server
+            socket.emit('requestCheckInStatus');
+
+            // Event listener for when the server responds with the user's check-in status
+            socket.on('responseCheckInStatus', (checkInStatus) => {
+                if (checkInStatus === "checkedIn") {
+                    checkedIn = true;
+                    toggleCheckInButton.textContent = "Check Out";
+                    updateStatus("Checked In");
+                }
+            });
+        });
 
         // Event listener for the Check-In button
         toggleCheckInButton.addEventListener("click", () => {
@@ -206,6 +222,7 @@
     </script>
 </body>
 </html>
+
 
 
 
