@@ -103,7 +103,15 @@
         let lastCheckOutTime = 0;
         const localStorageKey = "checkInStatus";
 
-        // Event listener for when the page is fully loaded
+        // Check if the user has previously checked in
+        const previousCheckInStatus = localStorage.getItem(localStorageKey);
+        if (previousCheckInStatus === "checkedIn") {
+            checkedIn = true;
+            toggleCheckInButton.textContent = "Check Out";
+            updateStatus("Checked In");
+        }
+
+       // Event listener for when the page is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
     // Request the user's check-in status from the server
     socket.emit('requestCheckInStatus');
@@ -114,21 +122,14 @@ document.addEventListener("DOMContentLoaded", () => {
             checkedIn = true;
             toggleCheckInButton.textContent = "Check Out";
             updateStatus("Checked In");
+        } else {
+            checkedIn = false;
+            toggleCheckInButton.textContent = "Check In";
+            updateStatus("Checked Out");
         }
     });
-
-    // Check if the user has previously checked in
-    const previousCheckInStatus = localStorage.getItem(localStorageKey);
-    if (previousCheckInStatus === "checkedIn") {
-        // Send a "checkOut" message to the server to update the count
-        socket.emit('checkOut');
-        checkedIn = false; // Update the client's status
-        localStorage.removeItem(localStorageKey);
-        updateStatus("Checked Out");
-        toggleCheckInButton.textContent = "Check In";
-        lastCheckOutTime = Date.now();
-    }
 });
+
 
         // Event listener for the Check-In button
         toggleCheckInButton.addEventListener("click", () => {
