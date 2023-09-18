@@ -100,6 +100,7 @@
         const socket = io();
 
         let checkedIn = false;
+        let lastCheckOutTime = 0; // Define lastCheckOutTime
         const localStorageKey = "checkInStatus";
 
         // Check if the user has previously checked in
@@ -146,7 +147,7 @@
                 localStorage.removeItem(localStorageKey);
                 updateStatus("Checked Out");
                 toggleCheckInButton.textContent = "Check In";
-                lastCheckOutTime = Date.now();
+                lastCheckOutTime = Date.now(); // Update lastCheckOutTime
                 socket.emit('checkOut');
             }
         });
