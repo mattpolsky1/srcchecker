@@ -138,14 +138,14 @@
                             const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                             const distance = getDistance({ latitude: userLatitude, longitude: userLongitude }, targetLocation);
 
-                            if (distance <= 3218.69) { // Within 2 miles
+                            if (distance <= 16093.45) { // Within 2 miles
                                 checkedIn = true;
                                 localStorage.setItem(localStorageKey, "checkedIn");
                                 updateStatus("Checked In");
                                 toggleCheckInButton.textContent = "Check Out";
                                 socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
                             } else {
-                                alert("You are not within 2 miles of the specified location. Check-in not allowed.");
+                                alert("You are not within 10 miles of the specified location. Check-in not allowed.");
                             }
                         }, (error) => {
                             console.error('Error getting user location:', error);
@@ -172,7 +172,7 @@
         });
 
         socket.on('checkInNotAllowed', () => {
-            alert('You are not within 2 miles of the specified location. Check-in not allowed.');
+            alert('You are not within 10 miles of the specified location. Check-in not allowed.');
         });
 
         function updateCount(count) {

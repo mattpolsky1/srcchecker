@@ -55,8 +55,8 @@ io.on('connection', (socket) => {
                 const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                 const distance = getDistance(userLocation, targetLocation);
 
-                // Check if the user is within 2 miles of the target location (3218.69 meters)
-                if (distance <= 3218.69) {
+                // Check if the user is within 10 miles of the target location (3218.69 meters)
+                if (distance <= 16093.45) {
                     // Mark the user as checked in and store their socket ID
                     checkedInUsers.set(socket.id, true);
                     totalCheckIns++;
