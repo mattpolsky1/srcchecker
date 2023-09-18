@@ -50,7 +50,7 @@ io.on('connection', (socket) => {
 
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
-
+    
         // Check if the user is already checked in
         if (checkedInUsers.has(userId)) {
             socket.emit('alreadyCheckedIn');
@@ -60,12 +60,16 @@ io.on('connection', (socket) => {
                 // Calculate the distance between user's location and the target location
                 const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                 const distance = getDistance(userLocation, targetLocation);
-
+    
                 // Check if the user is within 10 miles of the target location (3218.69 meters)
                 if (distance <= 16093.45) {
                     // Mark the user as checked in and store their socket ID
                     checkedInUsers.set(userId, socket);
+    
+                    // Increment the totalCheckIns count
                     totalCheckIns++;
+    
+                    // Send the updated count to all clients
                     io.emit('updateCount', totalCheckIns);
                 } else {
                     // Notify the client that check-in is not allowed
@@ -77,6 +81,7 @@ io.on('connection', (socket) => {
             }
         }
     });
+    
 
     socket.on('checkOut', () => {
         // Check if the user is checked in and has a valid socket ID
