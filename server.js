@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
+const uuid = require('uuid'); // Import the 'uuid' package
 
 const app = express();
 const server = http.createServer(app);
@@ -34,11 +35,16 @@ function updatePeopleCount() {
 }
 
 io.on('connection', (socket) => {
+    const userId = socket.handshake.headers.cookie?.userId || uuid.v4(); // Generate or retrieve the user's ID from the cookie
+
+    // Store the user's socket with their unique ID
+    checkedInUsers.set(userId, socket);
+
     // Emit the current totalCheckIns count to the newly connected user
     socket.emit('updateCount', totalCheckIns);
 
-    // Check if the user is already checked in based on their socket ID
-    if (checkedInUsers.has(socket.id)) {
+    // Check if the user is already checked in based on their ID
+    if (checkedInUsers.has(userId)) {
         socket.emit('alreadyCheckedIn');
     }
 
@@ -46,7 +52,7 @@ io.on('connection', (socket) => {
         updatePeopleCount();
 
         // Check if the user is already checked in
-        if (checkedInUsers.has(socket.id)) {
+        if (checkedInUsers.has(userId)) {
             socket.emit('alreadyCheckedIn');
         } else {
             // Check if geolocation data is available
@@ -58,7 +64,7 @@ io.on('connection', (socket) => {
                 // Check if the user is within 10 miles of the target location (3218.69 meters)
                 if (distance <= 16093.45) {
                     // Mark the user as checked in and store their socket ID
-                    checkedInUsers.set(socket.id, true);
+                    checkedInUsers.set(userId, socket);
                     totalCheckIns++;
                     io.emit('updateCount', totalCheckIns);
                 } else {
@@ -74,12 +80,15 @@ io.on('connection', (socket) => {
 
     socket.on('checkOut', () => {
         // Check if the user is checked in and has a valid socket ID
-        if (checkedInUsers.has(socket.id)) {
+        if (checkedInUsers.has(userId)) {
             totalCheckIns--; // Decrement the totalCheckIns count
-            checkedInUsers.delete(socket.id);
+            checkedInUsers.delete(userId);
             io.emit('updateCount', totalCheckIns);
         }
     });
+
+    // Set the user's unique ID in a cookie
+    socket.handshake.headers.cookie = `userId=${userId}`;
 });
 
 // Haversine formula to calculate distance between two points on the Earth's surface

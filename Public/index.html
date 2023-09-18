@@ -100,7 +100,6 @@
         const socket = io();
 
         let checkedIn = false;
-        let lastCheckOutTime = 0;
         const localStorageKey = "checkInStatus";
 
         // Check if the user has previously checked in
@@ -111,20 +110,47 @@
             updateStatus("Checked In");
         }
 
-        // Event listener for when the page is fully loaded
-        document.addEventListener("DOMContentLoaded", () => {
-            // Request the user's check-in status from the server
-            socket.emit('requestCheckInStatus');
+        // Event listener for the Check-In button
+        toggleCheckInButton.addEventListener("click", () => {
+            if (!checkedIn) {
+                const currentTime = Date.now();
+                if (currentTime - lastCheckOutTime >= 15000) { // 15-second cooldown
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition((position) => {
+                            const userLatitude = position.coords.latitude;
+                            const userLongitude = position.coords.longitude;
+                            const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
+                            const distance = getDistance({ latitude: userLatitude, longitude: userLongitude }, targetLocation);
 
-            // Event listener for when the server responds with the user's check-in status
-            socket.on('responseCheckInStatus', (checkInStatus) => {
-                if (checkInStatus === "checkedIn") {
-                    checkedIn = true;
-                    toggleCheckInButton.textContent = "Check Out";
-                    updateStatus("Checked In");
+                            if (distance <= 16093.45) { // Within 2 miles
+                                checkedIn = true;
+                                localStorage.setItem(localStorageKey, "checkedIn");
+                                updateStatus("Checked In");
+                                toggleCheckInButton.textContent = "Check Out";
+                                socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
+                            } else {
+                                alert("You are not within 10 miles of the specified location. Check-in not allowed.");
+                            }
+                        }, (error) => {
+                            console.error('Error getting user location:', error);
+                            alert('Error getting your location. Please check your web settings and try again.');
+                        });
+                    } else {
+                        alert('Geolocation is not supported by your browser.');
+                    }
+                } else {
+                    alert("Please wait 15 seconds before checking in again.");
                 }
-            });
+            } else {
+                checkedIn = false;
+                localStorage.removeItem(localStorageKey);
+                updateStatus("Checked Out");
+                toggleCheckInButton.textContent = "Check In";
+                lastCheckOutTime = Date.now();
+                socket.emit('checkOut');
+            }
         });
+
 
         // Event listener for the Check-In button
         toggleCheckInButton.addEventListener("click", () => {
