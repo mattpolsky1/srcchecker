@@ -9,7 +9,6 @@ const server = http.createServer(app);
 const io = socketIO(server);
 
 let totalCheckIns = 0;
-let lastCheckInTime = 0;
 
 // Create a map to store checked-in users
 const checkedInUsers = new Map();
@@ -26,14 +25,6 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath);
 });
 
-function updatePeopleCount() {
-    const currentTime = Date.now();
-    if (currentTime - lastCheckInTime >= 8 * 60 * 60 * 1000) {
-        lastCheckInTime = currentTime;
-        totalCheckIns = 0;
-    }
-}
-
 io.on('connection', (socket) => {
     const userId = socket.handshake.headers.cookie?.userId || uuid.v4(); // Generate or retrieve the user's ID from the cookie
 
@@ -49,8 +40,6 @@ io.on('connection', (socket) => {
     }
 
     socket.on('checkIn', (userLocation) => {
-        updatePeopleCount();
-    
         // Check if the user is already checked in
         if (checkedInUsers.has(userId)) {
             socket.emit('alreadyCheckedIn');
@@ -60,17 +49,13 @@ io.on('connection', (socket) => {
                 // Calculate the distance between user's location and the target location
                 const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                 const distance = getDistance(userLocation, targetLocation);
-    
+
                 // Check if the user is within 10 miles of the target location (3218.69 meters)
                 if (distance <= 16093.45) {
                     // Mark the user as checked in and store their socket ID
                     checkedInUsers.set(userId, socket);
-    
-                    // Increment the totalCheckIns count
-                    totalCheckIns++;
-    
-                    // Send the updated count to all clients
-                    io.emit('updateCount', totalCheckIns);
+                    totalCheckIns++; // Increment the totalCheckIns count
+                    io.emit('updateCount', totalCheckIns); // Send the updated count to all clients
                 } else {
                     // Notify the client that check-in is not allowed
                     socket.emit('checkInNotAllowed');
@@ -81,7 +66,7 @@ io.on('connection', (socket) => {
             }
         }
     });
-    
+
     socket.on('checkOut', () => {
         // Check if the user is checked in and has a valid socket ID
         if (checkedInUsers.has(userId)) {
@@ -126,6 +111,7 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
