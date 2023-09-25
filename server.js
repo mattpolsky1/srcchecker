@@ -25,24 +25,23 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath);
 });
 
-function resetPeopleCountAt8PM() {
-    const now = new Date();
-    const timeZoneOffset = now.getTimezoneOffset();
-    const easternTimeOffset = 300; // Eastern Time is UTC-5
+function updatePeopleCount() {
+    const currentTime = Date.now();
 
-    // Calculate the time difference in minutes between the current time and 8 PM Eastern Time
-    const timeDifferenceMinutes = (now.getHours() * 60 + now.getMinutes()) + (timeZoneOffset - easternTimeOffset);
+    // Get the current time in Eastern Time (UTC-5)
+    const currentTimeInET = new Date(currentTime - 5 * 60 * 60 * 1000);
 
-    if (timeDifferenceMinutes >= 20 * 60 && timeDifferenceMinutes < 21 * 60) {
-        // Reset the count at 8 PM Eastern Time
+    // Define the reset time (8:00 PM in ET)
+    const resetTimeInET = new Date(currentTimeInET);
+    resetTimeInET.setHours(20, 0, 0, 0);
+
+    if (currentTimeInET >= resetTimeInET) {
+        // Reset the count at 8:00 PM ET
         totalCheckIns = 0;
-        lastCheckInTime = Date.now();
-        io.emit('updateCount', totalCheckIns);
     }
-}
 
-// Call the resetPeopleCountAt8PM function periodically (e.g., every minute)
-setInterval(resetPeopleCountAt8PM, 60000); // Check every minute
+    lastCheckInTime = currentTime;
+}
 
 io.on('connection', (socket) => {
     // Emit the current totalCheckIns count to the newly connected user
@@ -72,6 +71,16 @@ io.on('connection', (socket) => {
                     checkedInUsers.set(socket.id, true);
                     totalCheckIns++;
                     io.emit('updateCount', totalCheckIns);
+
+                    // Automatically check out the user after 30 seconds
+                    setTimeout(() => {
+                        if (checkedInUsers.get(socket.id)) {
+                            checkedInUsers.delete(socket.id);
+                            totalCheckIns--;
+                            io.emit('updateCount', totalCheckIns);
+                            socket.emit('checkedOutAutomatically');
+                        }
+                    }, 30000); // 30 seconds
                 } else {
                     // Notify the client that check-in is not allowed
                     socket.emit('checkInNotAllowed');
@@ -86,8 +95,8 @@ io.on('connection', (socket) => {
     socket.on('checkOut', () => {
         // Check if the user is checked in and has a valid socket ID
         if (checkedInUsers.has(socket.id)) {
-            totalCheckIns--; // Decrement the totalCheckIns count
             checkedInUsers.delete(socket.id);
+            totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
         }
     });
