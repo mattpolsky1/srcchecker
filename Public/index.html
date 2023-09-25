@@ -122,6 +122,10 @@
                     checkedIn = true;
                     toggleCheckInButton.textContent = "Check Out";
                     updateStatus("Checked In");
+                } else {
+                    checkedIn = false;
+                    toggleCheckInButton.textContent = "Check In";
+                    updateStatus("Checked Out");
                 }
             });
         });
@@ -222,6 +226,7 @@
     </script>
 </body>
 </html>
+
 
 
 

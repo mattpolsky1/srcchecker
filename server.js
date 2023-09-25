@@ -25,13 +25,24 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath);
 });
 
-function updatePeopleCount() {
-    const currentTime = Date.now();
-    if (currentTime - lastCheckInTime >= 8 * 60 * 60 * 1000) {
-        lastCheckInTime = currentTime;
+function resetPeopleCountAt8PM() {
+    const now = new Date();
+    const timeZoneOffset = now.getTimezoneOffset();
+    const easternTimeOffset = 300; // Eastern Time is UTC-5
+
+    // Calculate the time difference in minutes between the current time and 8 PM Eastern Time
+    const timeDifferenceMinutes = (now.getHours() * 60 + now.getMinutes()) + (timeZoneOffset - easternTimeOffset);
+
+    if (timeDifferenceMinutes >= 20 * 60 && timeDifferenceMinutes < 21 * 60) {
+        // Reset the count at 8 PM Eastern Time
         totalCheckIns = 0;
+        lastCheckInTime = Date.now();
+        io.emit('updateCount', totalCheckIns);
     }
 }
+
+// Call the resetPeopleCountAt8PM function periodically (e.g., every minute)
+setInterval(resetPeopleCountAt8PM, 60000); // Check every minute
 
 io.on('connection', (socket) => {
     // Emit the current totalCheckIns count to the newly connected user
@@ -113,6 +124,7 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
