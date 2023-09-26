@@ -16,6 +16,9 @@ const checkedInUsers = new Map();
 // Create a map to store the last check-in time for each user
 const lastCheckInTimes = new Map();
 
+// Create a map to store the last check-out time for each user
+const lastCheckOutTimes = new Map();
+
 // Define the path to your static files directory
 const publicPath = path.join(__dirname, 'Public');
 
@@ -75,9 +78,15 @@ io.on('connection', (socket) => {
                 }
             }
 
+            // Check if the user has recently checked out (within the last 30 seconds)
+            if (recentlyCheckedOut(socket.id)) {
+                socket.emit('checkInAfterCheckoutError');
+                return; // Exit the function, preventing the check-in
+            }
+
             // Check if geolocation data is available
             if (userLocation && userLocation.latitude && userLocation.longitude) {
-                // Calculate the distance between user's location and the target location
+                // Calculate the distance between the user's location and the target location
                 const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                 const distance = getDistance(userLocation, targetLocation);
 
@@ -116,9 +125,23 @@ io.on('connection', (socket) => {
             checkedInUsers.delete(socket.id);
             totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
+
+            // Record the check-out time
+            lastCheckOutTimes.set(socket.id, Date.now());
         }
     });
 });
+
+function recentlyCheckedOut(socketId) {
+    // Check if the user has recently checked out (within the last 30 seconds)
+    const lastCheckOutTime = lastCheckOutTimes.get(socketId);
+    if (lastCheckOutTime) {
+        const currentTime = Date.now();
+        const timeSinceLastCheckOut = currentTime - lastCheckOutTime;
+        return timeSinceLastCheckOut < 30000;
+    }
+    return false;
+}
 
 // Haversine formula to calculate distance between two points on the Earth's surface
 function getDistance(location1, location2) {
@@ -151,6 +174,7 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
