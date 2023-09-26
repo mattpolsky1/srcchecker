@@ -13,6 +13,9 @@ let lastCheckInTime = 0;
 // Create a map to store checked-in users
 const checkedInUsers = new Map();
 
+// Create a map to store the last check-in time for each user
+const lastCheckInTimes = new Map();
+
 // Define the path to your static files directory
 const publicPath = path.join(__dirname, 'Public');
 
@@ -59,6 +62,19 @@ io.on('connection', (socket) => {
         if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
         } else {
+            // Check if the user has a last check-in time recorded
+            if (lastCheckInTimes.has(socket.id)) {
+                const currentTime = Date.now();
+                const lastCheckInTime = lastCheckInTimes.get(socket.id);
+                const timeSinceLastCheckIn = currentTime - lastCheckInTime;
+
+                // Check if the user is attempting to check in before the cooldown period (30 seconds) has passed
+                if (timeSinceLastCheckIn < 30000) {
+                    socket.emit('checkInCooldown', 30000 - timeSinceLastCheckIn);
+                    return; // Exit the function, preventing the check-in
+                }
+            }
+
             // Check if geolocation data is available
             if (userLocation && userLocation.latitude && userLocation.longitude) {
                 // Calculate the distance between user's location and the target location
@@ -67,10 +83,12 @@ io.on('connection', (socket) => {
 
                 // Check if the user is within 10 miles of the target location (3218.69 meters)
                 if (distance <= 16093.45) {
-                    // Mark the user as checked in and store their socket ID
+                    // Mark the user as checked in, store their socket ID, and record the check-in time
                     checkedInUsers.set(socket.id, true);
                     totalCheckIns++;
                     io.emit('updateCount', totalCheckIns);
+
+                    lastCheckInTimes.set(socket.id, Date.now()); // Record the check-in time
 
                     // Automatically check out the user after 30 seconds
                     setTimeout(() => {
@@ -133,6 +151,7 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
