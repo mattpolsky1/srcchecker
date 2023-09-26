@@ -80,10 +80,6 @@
             left: 10px;
             color: #5b5857; /* Changed text color */
         }
-
-        #errorText {
-            color: red;
-        }
     </style>
 </head>
 <body>
@@ -91,8 +87,6 @@
     <div id="status">Status: <span id="statusLabel">Checked Out</span></div>
     <div id="gymStatus">Gym Status: <span id="gymStatusLabel">Empty</span></div>
     <button id="toggleCheckInButton" class="checkIn">Check In</button>
-    <button id="toggleCheckOutButton" class="checkOut">Check Out</button>
-    <div id="errorText"></div>
     <div id="logo">CampusHoops &copy; 2023</div>
 
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry"></script>
@@ -103,8 +97,6 @@
         const toggleCheckInButton = document.getElementById("toggleCheckInButton");
         const statusLabel = document.getElementById("statusLabel");
         const gymStatusLabel = document.getElementById("gymStatusLabel");
-        const toggleCheckOutButton = document.getElementById("toggleCheckOutButton");
-        const errorText = document.getElementById("errorText");
 
         const socket = io();
 
@@ -150,10 +142,9 @@
                             localStorage.setItem(localStorageKey, "checkedIn");
                             updateStatus("Checked In");
                             toggleCheckInButton.textContent = "Check Out";
-                            toggleCheckOutButton.style.display = "none"; // Hide Check-Out button
                             socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
                         } else {
-                            errorText.textContent = "You are not within 10 miles of the specified location. Check-in not allowed.";
+                            alert("You are not within 10 miles of the specified location. Check-in not allowed.");
                         }
                     }, (error) => {
                         console.error('Error getting user location:', error);
@@ -167,19 +158,8 @@
                 localStorage.removeItem(localStorageKey);
                 updateStatus("Checked Out");
                 toggleCheckInButton.textContent = "Check In";
-                toggleCheckOutButton.style.display = "block"; // Show Check-Out button
                 socket.emit('checkOut');
             }
-        });
-
-        // Event listener for the Check-Out button
-        toggleCheckOutButton.addEventListener("click", () => {
-            checkedIn = false;
-            localStorage.removeItem(localStorageKey);
-            updateStatus("Checked Out");
-            toggleCheckInButton.textContent = "Check In";
-            toggleCheckOutButton.style.display = "none"; // Hide Check-Out button
-            socket.emit('checkOut');
         });
 
         socket.on('updateCount', (count) => {
@@ -187,19 +167,11 @@
         });
 
         socket.on('checkInNotAllowed', () => {
-            errorText.textContent = "You are not within 10 miles of the specified location. Check-in not allowed.";
-        });
-
-        socket.on('checkInCooldown', (cooldownTime) => {
-            errorText.textContent = `Please wait ${Math.ceil(cooldownTime / 1000)} seconds before checking in again.`;
-        });
-
-        socket.on('checkInAfterCheckoutError', () => {
-            errorText.textContent = "Stop spamming check-in! Please wait 30 seconds after checking out before checking in again.";
+            alert('You are not within 10 miles of the specified location. Check-in not allowed.');
         });
 
         socket.on('checkedOutAutomatically', () => {
-            errorText.textContent = 'You have been checked out automatically after 30 seconds of inactivity.';
+            alert('You have been checked out automatically after 30 seconds of inactivity.');
         });
 
         function updateCount(count) {
