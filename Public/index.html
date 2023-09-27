@@ -14,6 +14,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            position: relative; /* Added this line for positioning */
         }
 
         h1 {
@@ -80,6 +81,12 @@
             left: 10px;
             color: #5b5857; /* Changed text color */
         }
+
+        /* Style to position the image at the bottom left */
+        #logo img {
+            width: 100px; /* Adjust the width as needed */
+            height: auto; /* Maintain aspect ratio */
+        }
     </style>
 </head>
 <body>
@@ -87,7 +94,10 @@
     <div id="status">Status: <span id="statusLabel">Checked Out</span></div>
     <div id="gymStatus">Gym Status: <span id="gymStatusLabel">Empty</span></div>
     <button id="toggleCheckInButton" class="checkIn">Check In</button>
-    <div id="logo">CampusHoops &copy; 2023</div>
+    <div id="logo">
+        <img src="file:///Users/uncsupport/Desktop/campushoopslogo-02.png" alt="Campus Hoops Logo">
+        CampusHoops &copy; 2023
+    </div>
 
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry"></script>
 
