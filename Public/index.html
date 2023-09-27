@@ -5,7 +5,7 @@
     <style>
 body {
     font-family: 'Gotham Bold', Arial, sans-serif;
-    background-color: #b6d0e8; /* Changed background color */
+    background-color: #b6d0e8;
     text-align: center;
     padding: 0;
     margin: 0;
@@ -18,21 +18,21 @@ body {
 }
 
 h1 {
-    font-size: 48px;
+    font-size: 72px; /* Larger font size */
     font-weight: bold;
     color: #295296;
 }
 
 #peopleAtGym {
-    font-size: 150px;
+    font-size: 100px; /* Larger font size */
     font-weight: bold;
     color: #295296;
-    text-align: center; /* Center the text */
-    margin-bottom: 20px; /* Add spacing between the counter and button */
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 #status {
-    font-size: 14px;
+    font-size: 24px; /* Larger font size */
     font-weight: bold;
     color: #5b5857;
     position: absolute;
@@ -41,7 +41,7 @@ h1 {
 }
 
 #gymStatus {
-    font-size: 24px;
+    font-size: 36px; /* Adjusted font size */
     font-weight: bold;
     color: #295296;
     text-align: center; /* Center the text */
@@ -49,9 +49,9 @@ h1 {
 }
 
 button.checkIn {
-    font-size: 36px;
+    font-size: 48px; /* Larger font size for mobile */
     font-weight: bold;
-    padding: 20px 40px;
+    padding: 30px 60px; /* Larger button size */
     background-color: #295296;
     color: #fff;
     border: none;
@@ -61,9 +61,9 @@ button.checkIn {
 }
 
 button.checkOut {
-    font-size: 36px;
+    font-size: 48px;
     font-weight: bold;
-    padding: 20px 40px;
+    padding: 30px 60px;
     background-color: #FF5733;
     color: #fff;
     border: none;
@@ -87,24 +87,26 @@ button:hover {
 
 /* Style to position the image at the bottom left */
 #logo img {
-    width: 200px;
+    width: 220px; /* Slightly larger logo */
     height: auto;
 }
 
 /* Media query for small screens (mobile devices) */
 @media screen and (max-width: 768px) {
     #peopleAtGym {
-        font-size: 100px; /* Adjust font size for mobile */
-    }
-
-    button.checkIn {
-        font-size: 24px; /* Adjust font size for mobile */
+        font-size: 72px; /* Larger font size */
     }
 
     #status {
-        position: static; /* Remove absolute positioning */
+        font-size: 24px; /* Larger font size */
+        position: static;
+    }
+
+    #gymStatus {
+        font-size: 30px; /* Adjusted font size */
     }
 }
+
 
     </style>
 </head>
