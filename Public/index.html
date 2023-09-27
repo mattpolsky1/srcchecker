@@ -3,90 +3,110 @@
 <head>
     <title>Gym Attendance</title>
     <style>
-        body {
-            font-family: 'Gotham Bold', Arial, sans-serif;
-            background-color: #b6d0e8; /* Changed background color */
-            text-align: center;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            position: relative; /* Added this line for positioning */
-        }
+body {
+    font-family: 'Gotham Bold', Arial, sans-serif;
+    background-color: #b6d0e8; /* Changed background color */
+    text-align: center;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    position: relative;
+}
 
-        h1 {
-            font-size: 48px;
-            font-weight: bold;
-            color: #295296; /* Changed text color */
-        }
+h1 {
+    font-size: 48px;
+    font-weight: bold;
+    color: #295296;
+}
 
-        #peopleAtGym {
-            font-size: 150px; /* Made people at the gym bigger */
-            font-weight: bold;
-            color: #295296; /* Changed text color to navy blue */
-        }
+#peopleAtGym {
+    font-size: 150px;
+    font-weight: bold;
+    color: #295296;
+    text-align: center; /* Center the text */
+    margin-bottom: 20px; /* Add spacing between the counter and button */
+}
 
-        #status {
-            font-size: 14px;
-            font-weight: bold;
-            color: #5b5857; /* Changed text color */
-            position: absolute;
-            top: 10px;
-            right: 10px;
-        }
+#status {
+    font-size: 14px;
+    font-weight: bold;
+    color: #5b5857;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
 
-        #gymStatus {
-            font-size: 24px;
-            font-weight: bold;
-            color: #295296; /* Changed text color */
-            margin-top: 20px;
-        }
+#gymStatus {
+    font-size: 24px;
+    font-weight: bold;
+    color: #295296;
+    position: absolute;
+    top: 10px;
+    right: 10px; /* Adjust position to the right */
+}
 
-        button.checkIn {
-            font-size: 36px;
-            font-weight: bold;
-            padding: 20px 40px;
-            background-color: #295296; /* Changed button color */
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            margin-top: 30px;
-            display: block;
-        }
+button.checkIn {
+    font-size: 36px;
+    font-weight: bold;
+    padding: 20px 40px;
+    background-color: #295296;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    margin-top: 30px;
+    display: block;
+}
 
-        button.checkOut {
-            font-size: 36px;
-            font-weight: bold;
-            padding: 20px 40px;
-            background-color: #FF5733;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            margin-top: 30px;
-            display: block;
-        }
+button.checkOut {
+    font-size: 36px;
+    font-weight: bold;
+    padding: 20px 40px;
+    background-color: #FF5733;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    margin-top: 30px;
+    display: block;
+}
 
-        button:hover {
-            background-color: #0056b3;
-        }
+button:hover {
+    background-color: #0056b3;
+}
 
-        #logo {
-            font-size: 14px;
-            font-weight: bold;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            color: #5b5857; /* Changed text color */
-        }
+#logo {
+    font-size: 14px;
+    font-weight: bold;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    color: #5b5857;
+}
 
-        /* Style to position the image at the bottom left */
-        #logo img {
-            width: 200px; /* Adjust the width as needed */
-            height: auto; /* Maintain aspect ratio */
-        }
+/* Style to position the image at the bottom left */
+#logo img {
+    width: 200px;
+    height: auto;
+}
+
+/* Media query for small screens (mobile devices) */
+@media screen and (max-width: 768px) {
+    #peopleAtGym {
+        font-size: 100px; /* Adjust font size for mobile */
+    }
+
+    button.checkIn {
+        font-size: 24px; /* Adjust font size for mobile */
+    }
+
+    #status {
+        position: static; /* Remove absolute positioning */
+    }
+}
+
     </style>
 </head>
 <body>
