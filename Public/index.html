@@ -60,6 +60,10 @@
             display: block;
         }
 
+        button.checkIn.hidden {
+            display: none; /* Hide the button */
+        }
+
         button.checkOut {
             font-size: 48px;
             font-weight: bold;
@@ -135,7 +139,7 @@
     const previousCheckInStatus = localStorage.getItem(localStorageKey);
     if (previousCheckInStatus === "checkedIn") {
         checkedIn = true;
-        toggleCheckInButton.textContent = "Check Out";
+        toggleCheckInButton.classList.add("hidden"); // Hide the button
         updateStatus("Checked In");
     }
 
@@ -148,7 +152,7 @@
         socket.on('responseCheckInStatus', (checkInStatus) => {
             if (checkInStatus === "checkedIn") {
                 checkedIn = true;
-                toggleCheckInButton.textContent = "Check Out";
+                toggleCheckInButton.classList.add("hidden"); // Hide the button
                 updateStatus("Checked In");
             }
         });
@@ -169,7 +173,7 @@
                         checkedIn = true;
                         localStorage.setItem(localStorageKey, "checkedIn");
                         updateStatus("Checked In");
-                        toggleCheckInButton.textContent = "Check Out";
+                        toggleCheckInButton.classList.add("hidden"); // Hide the button
                         socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
                     } else {
                         alert("You are not within 10 miles of the specified location. Check-in not allowed.");
@@ -181,18 +185,6 @@
             } else {
                 alert('Geolocation is not supported by your browser.');
             }
-        } else {
-            checkedIn = false;
-            localStorage.removeItem(localStorageKey);
-            updateStatus("Checked Out");
-            toggleCheckInButton.style.display = "none"; // Remove the button when checking out
-            socket.emit('checkOut');
-
-            // Automatically check out the user after 30 seconds
-            setTimeout(() => {
-                toggleCheckInButton.style.display = "block"; // Reappear the button after auto-checkout
-                toggleCheckInButton.textContent = "Check In"; // Change the button text back to "Check In"
-            }, 30000); // 30 seconds
         }
     });
 
@@ -206,31 +198,31 @@
 
     socket.on('checkedOutAutomatically', () => {
         alert('You have been checked out automatically after 30 seconds of inactivity.');
+        checkedIn = false;
+        localStorage.removeItem(localStorageKey);
+        updateStatus("Checked Out");
+        toggleCheckInButton.classList.remove("hidden"); // Show the button
     });
 
     function updateCount(count) {
         peopleAtGymElement.textContent = count;
-        updateGymStatus(count);
+        if (count > 50) {
+            gymStatusLabel.textContent = "Packed";
+            gymStatusLabel.style.color = "#FF5733"; // Red color
+        } else {
+            gymStatusLabel.textContent = "Empty";
+            gymStatusLabel.style.color = "#295296"; // Blue color
+        }
     }
 
     function updateStatus(status) {
         statusLabel.textContent = status;
+        statusLabel.style.color = status === "Checked In" ? "#295296" : "#FF5733"; // Blue for Checked In, Red for Checked Out
     }
 
-    function updateGymStatus(count) {
-        if (count >= 0 && count <= 19) {
-            gymStatusLabel.textContent = "Empty";
-        } else if (count >= 20 && count <= 39) {
-            gymStatusLabel.textContent = "Moderate";
-        } else if (count >= 40 && count <= 59) {
-            gymStatusLabel.textContent = "Busy";
-        } else {
-            gymStatusLabel.textContent = "Packed";
-        }
-    }
-
+    // Haversine formula to calculate distance between two points on the Earth's surface
     function getDistance(location1, location2) {
-        const R = 6371;
+        const R = 6371; // Radius of the Earth in kilometers
         const lat1 = location1.latitude;
         const lon1 = location1.longitude;
         const lat2 = location2.latitude;
@@ -244,11 +236,12 @@
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = R * c;
+        const distance = R * c; // Distance in kilometers
 
-        return distance * 1000;
+        return distance * 1000; // Convert to meters
     }
 
+    // Function to convert degrees to radians
     function toRadians(degrees) {
         return degrees * (Math.PI / 180);
     }
