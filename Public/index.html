@@ -161,28 +161,31 @@ button:hover {
             if (!checkedIn) {
                 const currentTime = Date.now();
                 if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition((position) => {
-                        const userLatitude = position.coords.latitude;
-                        const userLongitude = position.coords.longitude;
-                        const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
-                        const distance = getDistance({ latitude: userLatitude, longitude: userLongitude }, targetLocation);
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            // Success, handle the geolocation data here
+        },
+        (error) => {
+            // Handle geolocation errors
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("Geolocation permission denied by user.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Geolocation information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    alert("Geolocation request timed out.");
+                    break;
+                default:
+                    alert("Error getting user location: " + error.message);
+            }
+        }
+    );
+} else {
+    alert('Geolocation is not supported by your browser.');
+}
 
-                        if (distance <= 16093.45) { // Within 10 miles
-                            checkedIn = true;
-                            localStorage.setItem(localStorageKey, "checkedIn");
-                            updateStatus("Checked In");
-                            toggleCheckInButton.textContent = "Check Out";
-                            socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
-                        } else {
-                            alert("You are not within 10 miles of the specified location. Check-in not allowed.");
-                        }
-                    }, (error) => {
-                        console.error('Error getting user location:', error);
-                        alert('Error getting your location. Please check your web settings and try again.');
-                    });
-                } else {
-                    alert('Geolocation is not supported by your browser.');
-                }
             } else {
                 checkedIn = false;
                 localStorage.removeItem(localStorageKey);
