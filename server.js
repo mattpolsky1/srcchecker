@@ -28,7 +28,6 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath);
 });
 
-function updatePeopleCount() {
     function updatePeopleCount() {
         const currentTime = Date.now();
     
