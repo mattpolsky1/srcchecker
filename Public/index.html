@@ -125,7 +125,7 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-     const peopleAtGymElement = document.getElementById("peopleAtGym");
+    const peopleAtGymElement = document.getElementById("peopleAtGym");
     const toggleCheckInButton = document.getElementById("toggleCheckInButton");
     const statusLabel = document.getElementById("statusLabel");
     const gymStatusLabel = document.getElementById("gymStatusLabel");
@@ -171,6 +171,31 @@
     function resetCheckoutTimer() {
         // Clear any existing timers
         clearInterval(checkoutTimer);
+    }
+
+    // Check if the user has previously checked in
+    const previousCheckInStatus = localStorage.getItem(localStorageKey);
+    const previousCheckInTimestamp = localStorage.getItem(localStorageTimestampKey);
+
+    if (previousCheckInStatus === "checkedIn" && previousCheckInTimestamp) {
+        const currentTime = Date.now();
+        const checkInTime = parseInt(previousCheckInTimestamp, 10);
+        const timeDifference = currentTime - checkInTime;
+
+        // Define the allowed check-in duration (30 seconds)
+        const allowedCheckInDuration = 30 * 1000;
+
+        if (timeDifference < allowedCheckInDuration) {
+            checkedIn = true;
+            toggleCheckInButton.classList.add("hidden"); // Hide the button
+            updateStatus("Checked In");
+            // Start the checkout timer
+            startCheckoutTimer();
+        } else {
+            // The allowed check-in duration has passed, so the user is checked out
+            localStorage.removeItem(localStorageKey);
+            localStorage.removeItem(localStorageTimestampKey);
+        }
     }
 
     // Event listener for the Check-In button
