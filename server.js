@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
+const session = require('express-session'); // Import express-session
 
 const app = express();
 const server = http.createServer(app);
@@ -15,6 +16,13 @@ const checkedInUsers = new Map();
 
 // Create a map to store the last check-in time for each user
 const lastCheckInTimes = new Map();
+
+// Use express-session middleware
+app.use(session({
+    secret: 'abcdefg12678',
+    resave: false,
+    saveUninitialized: true,
+}));
 
 // Define the path to your static files directory
 const publicPath = path.join(__dirname, 'Public');
