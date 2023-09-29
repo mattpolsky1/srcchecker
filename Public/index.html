@@ -134,54 +134,40 @@
 
     let checkedIn = false;
     const localStorageKey = "checkInStatus";
+    const localStorageTimestampKey = "checkInTimestamp";
 
     // Check if the user has previously checked in
-    function checkAutoCheckoutStatus() {
-        const localStorageKey = "checkInStatus";
-        const localStorageTimestampKey = "checkInTimestamp";
-        const checkInStatus = localStorage.getItem(localStorageKey);
-        const checkInTimestamp = localStorage.getItem(localStorageTimestampKey);
+    const previousCheckInStatus = localStorage.getItem(localStorageKey);
+    const previousCheckInTimestamp = localStorage.getItem(localStorageTimestampKey);
 
-        if (checkInStatus === "checkedIn" && checkInTimestamp) {
-            const currentTime = Date.now();
-            const checkInTime = parseInt(checkInTimestamp, 10);
-            const timeDifference = currentTime - checkInTime;
+    if (previousCheckInStatus === "checkedIn" && previousCheckInTimestamp) {
+        const currentTime = Date.now();
+        const checkInTime = parseInt(previousCheckInTimestamp, 10);
+        const timeDifference = currentTime - checkInTime;
 
-            // Define the allowed check-in duration (30 seconds in this example)
-            const allowedCheckInDuration = 30 * 1000;
+        // Define the allowed check-in duration (30 seconds in this example)
+        const allowedCheckInDuration = 30 * 1000;
 
-            if (timeDifference >= allowedCheckInDuration) {
-                // Automatically check out the user
-                checkedIn = false;
-                localStorage.removeItem(localStorageKey);
-                updateStatus("Checked Out");
-                toggleCheckInButton.classList.remove("hidden"); // Show the button
-            }
+        if (timeDifference < allowedCheckInDuration) {
+            checkedIn = true;
+            toggleCheckInButton.classList.add("hidden"); // Hide the button
+            updateStatus("Checked In");
+        } else {
+            // The allowed check-in duration has passed, so the user is checked out
+            localStorage.removeItem(localStorageKey);
+            localStorage.removeItem(localStorageTimestampKey);
         }
     }
-
-    // Event listener for when the page is fully loaded
-    document.addEventListener("DOMContentLoaded", () => {
-        // Request the user's check-in status from the server
-        socket.emit('requestCheckInStatus');
-
-        // Event listener for when the server responds with the user's check-in status
-        socket.on('responseCheckInStatus', (checkInStatus) => {
-            if (checkInStatus === "checkedIn") {
-                checkedIn = true;
-                toggleCheckInButton.classList.add("hidden"); // Hide the button
-                updateStatus("Checked In");
-            }
-
-            // Check the auto-checkout status after the response is received
-            checkAutoCheckoutStatus();
-        });
-    });
 
     // Event listener for the Check-In button
     toggleCheckInButton.addEventListener("click", () => {
         if (!checkedIn) {
             const currentTime = Date.now();
+            const checkInTimestamp = currentTime.toString();
+
+            // Store the check-in status and timestamp in localStorage
+            localStorage.setItem(localStorageKey, "checkedIn");
+            localStorage.setItem(localStorageTimestampKey, checkInTimestamp);
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((position) => {
                     const userLatitude = position.coords.latitude;
