@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const session = require('express-session'); // Add this line for session management
 
 const app = express();
 const server = http.createServer(app);
