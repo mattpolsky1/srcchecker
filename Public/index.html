@@ -165,9 +165,6 @@
         // Request the user's check-in status from the server
         socket.emit('requestCheckInStatus');
 
-        // Check the auto-checkout status when the page loads or refreshes
-        checkAutoCheckoutStatus();
-
         // Event listener for when the server responds with the user's check-in status
         socket.on('responseCheckInStatus', (checkInStatus) => {
             if (checkInStatus === "checkedIn") {
@@ -175,6 +172,9 @@
                 toggleCheckInButton.classList.add("hidden"); // Hide the button
                 updateStatus("Checked In");
             }
+
+            // Check the auto-checkout status after the response is received
+            checkAutoCheckoutStatus();
         });
     });
 
