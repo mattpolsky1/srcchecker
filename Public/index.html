@@ -125,7 +125,7 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    const peopleAtGymElement = document.getElementById("peopleAtGym");
+     const peopleAtGymElement = document.getElementById("peopleAtGym");
     const toggleCheckInButton = document.getElementById("toggleCheckInButton");
     const statusLabel = document.getElementById("statusLabel");
     const gymStatusLabel = document.getElementById("gymStatusLabel");
@@ -135,28 +135,42 @@
     let checkedIn = false;
     const localStorageKey = "checkInStatus";
     const localStorageTimestampKey = "checkInTimestamp";
+    let checkoutTimer;
 
-    // Check if the user has previously checked in
-    const previousCheckInStatus = localStorage.getItem(localStorageKey);
-    const previousCheckInTimestamp = localStorage.getItem(localStorageTimestampKey);
+    // Function to check in the user
+    function checkIn() {
+        checkedIn = true;
+        toggleCheckInButton.classList.add("hidden"); // Hide the button
+        updateStatus("Checked In");
+        // Start the checkout timer
+        startCheckoutTimer();
+    }
 
-    if (previousCheckInStatus === "checkedIn" && previousCheckInTimestamp) {
-        const currentTime = Date.now();
-        const checkInTime = parseInt(previousCheckInTimestamp, 10);
-        const timeDifference = currentTime - checkInTime;
+    // Function to check out the user
+    function checkOut() {
+        checkedIn = false;
+        toggleCheckInButton.classList.remove("hidden"); // Show the button
+        updateStatus("Checked Out");
+        // Stop and reset the checkout timer
+        resetCheckoutTimer();
+    }
 
-        // Define the allowed check-in duration (30 seconds in this example)
-        const allowedCheckInDuration = 30 * 1000;
+    // Function to start the checkout timer
+    function startCheckoutTimer() {
+        // Clear any existing timers
+        clearInterval(checkoutTimer);
 
-        if (timeDifference < allowedCheckInDuration) {
-            checkedIn = true;
-            toggleCheckInButton.classList.add("hidden"); // Hide the button
-            updateStatus("Checked In");
-        } else {
-            // The allowed check-in duration has passed, so the user is checked out
-            localStorage.removeItem(localStorageKey);
-            localStorage.removeItem(localStorageTimestampKey);
-        }
+        // Start a new timer for 30 seconds
+        checkoutTimer = setInterval(() => {
+            // Automatically check out the user after 30 seconds
+            checkOut();
+        }, 30000);
+    }
+
+    // Function to reset the checkout timer
+    function resetCheckoutTimer() {
+        // Clear any existing timers
+        clearInterval(checkoutTimer);
     }
 
     // Event listener for the Check-In button
