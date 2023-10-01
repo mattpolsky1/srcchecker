@@ -43,6 +43,16 @@ function updatePeopleCount() {
     const checkInStartTimeInET = new Date(currentTimeInET);
     checkInStartTimeInET.setHours(8, 0, 0, 0);
 
+    // Define the gym closed time (8:00 PM to 8:00 AM)
+    const gymClosedStartTimeInET = new Date(currentTimeInET);
+    gymClosedStartTimeInET.setHours(20, 0, 0, 0);
+
+    const gymClosedEndTimeInET = new Date(currentTimeInET);
+    gymClosedEndTimeInET.setHours(8, 0, 0, 0);
+
+    // Check if it's gym closed time
+    const isGymClosed = currentTimeInET >= gymClosedStartTimeInET || currentTimeInET < gymClosedEndTimeInET;
+
     if (currentTimeInET >= resetTimeInET) {
         // Reset the count at 8:00 PM ET
         totalCheckIns = 0;
@@ -55,8 +65,18 @@ function updatePeopleCount() {
     const isCheckInAllowed = currentTimeInET >= checkInStartTimeInET && currentTimeInET < resetTimeInET;
     io.emit('checkInAvailability', isCheckInAllowed);
 
+    // Update the button and message based on gym status
+    if (isGymClosed) {
+        toggleCheckInButton.classList.add("hidden"); // Hide the button
+        gymStatusLabel.textContent = "The gym is closed"; // Update the message
+    } else {
+        toggleCheckInButton.classList.remove("hidden"); // Show the button
+        gymStatusLabel.textContent = "Empty"; // Reset the message
+    }
+
     lastCheckInTime = currentTime;
 }
+
 
 io.on('connection', (socket) => {
     // Emit the current totalCheckIns count to the newly connected user
