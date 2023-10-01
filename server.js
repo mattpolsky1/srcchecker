@@ -29,6 +29,7 @@ app.get('/', (req, res) => {
 });
 
 // Function to update the people count and reset check-ins at 8 PM
+// Function to update the people count and reset check-ins at 8 PM
 function updatePeopleCount() {
     const currentTime = Date.now();
 
@@ -65,16 +66,20 @@ function updatePeopleCount() {
     const isCheckInAllowed = currentTimeInET >= checkInStartTimeInET && currentTimeInET < resetTimeInET;
 
     // Update the button and message based on gym status
-    if (isGymClosed || !isCheckInAllowed) {
+    if (isGymClosed) {
         toggleCheckInButton.classList.add("hidden"); // Hide the button
-        gymStatusLabel.textContent = "The gym is closed"; // Update the message
+        gymStatusLabel.textContent = "Gym Status: Closed"; // Update the message to indicate that the gym is closed
+    } else if (!isCheckInAllowed) {
+        toggleCheckInButton.classList.add("hidden"); // Hide the button
+        gymStatusLabel.textContent = "Gym Status: Not Allowed"; // Update the message to indicate that check-in is not allowed
     } else {
         toggleCheckInButton.classList.remove("hidden"); // Show the button
-        gymStatusLabel.textContent = "Empty"; // Reset the message
+        gymStatusLabel.textContent = "Gym Status: Empty"; // Reset the message to indicate that the gym is empty
     }
 
     lastCheckInTime = currentTime;
 }
+
 
 io.on('connection', (socket) => {
     // Emit the current totalCheckIns count to the newly connected user
