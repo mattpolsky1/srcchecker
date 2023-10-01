@@ -63,10 +63,9 @@ function updatePeopleCount() {
 
     // Emit the check-in availability status to clients
     const isCheckInAllowed = currentTimeInET >= checkInStartTimeInET && currentTimeInET < resetTimeInET;
-    io.emit('checkInAvailability', isCheckInAllowed);
 
     // Update the button and message based on gym status
-    if (isGymClosed) {
+    if (isGymClosed || !isCheckInAllowed) {
         toggleCheckInButton.classList.add("hidden"); // Hide the button
         gymStatusLabel.textContent = "The gym is closed"; // Update the message
     } else {
