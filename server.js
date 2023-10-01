@@ -28,26 +28,35 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath);
 });
 
-    function updatePeopleCount() {
-        const currentTime = Date.now();
-    
-        // Get the current time in Eastern Time (UTC-5)
-        const currentTimeInET = new Date(currentTime - 5 * 60 * 60 * 1000);
-    
-        // Define the reset time (8:00 PM in ET)
-        const resetTimeInET = new Date(currentTimeInET);
-        resetTimeInET.setHours(20, 0, 0, 0);
-    
-        if (currentTimeInET >= resetTimeInET) {
-            // Reset the count at 8:00 PM ET
-            totalCheckIns = 0;
-            checkedInUsers.clear(); // Clear the checked-in users
-            lastCheckInTimes.clear(); // Clear the last check-in times
-            io.emit('checkedOutAutomatically'); // Notify all clients of automatic checkout
-        }
-    
-        lastCheckInTime = currentTime;
+// Function to update the people count and reset check-ins at 8 PM
+function updatePeopleCount() {
+    const currentTime = Date.now();
+
+    // Get the current time in Eastern Time (UTC-5)
+    const currentTimeInET = new Date(currentTime - 5 * 60 * 60 * 1000);
+
+    // Define the reset time (8:00 PM in ET)
+    const resetTimeInET = new Date(currentTimeInET);
+    resetTimeInET.setHours(20, 0, 0, 0);
+
+    // Define the check-in start time (8:00 AM in ET)
+    const checkInStartTimeInET = new Date(currentTimeInET);
+    checkInStartTimeInET.setHours(8, 0, 0, 0);
+
+    if (currentTimeInET >= resetTimeInET) {
+        // Reset the count at 8:00 PM ET
+        totalCheckIns = 0;
+        checkedInUsers.clear(); // Clear the checked-in users
+        lastCheckInTimes.clear(); // Clear the last check-in times
+        io.emit('checkedOutAutomatically'); // Notify all clients of automatic checkout
     }
+
+    // Emit the check-in availability status to clients
+    const isCheckInAllowed = currentTimeInET >= checkInStartTimeInET && currentTimeInET < resetTimeInET;
+    io.emit('checkInAvailability', isCheckInAllowed);
+
+    lastCheckInTime = currentTime;
+}
 
 io.on('connection', (socket) => {
     // Emit the current totalCheckIns count to the newly connected user

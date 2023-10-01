@@ -134,34 +134,73 @@
 
     let checkedIn = false;
     const localStorageKey = "checkInStatus";
+    const localStorageTimestampKey = "checkInTimestamp";
+    let checkoutTimer;
 
-    // Check if the user has previously checked in
-    const previousCheckInStatus = localStorage.getItem(localStorageKey);
-    if (previousCheckInStatus === "checkedIn") {
+    // Function to check in the user
+    function checkIn() {
         checkedIn = true;
         toggleCheckInButton.classList.add("hidden"); // Hide the button
         updateStatus("Checked In");
+        // Start the checkout timer
+        startCheckoutTimer();
     }
 
-    // Event listener for when the page is fully loaded
-    document.addEventListener("DOMContentLoaded", () => {
-        // Request the user's check-in status from the server
-        socket.emit('requestCheckInStatus');
+    // Function to check out the user
+    function checkOut() {
+        checkedIn = false;
+        toggleCheckInButton.classList.remove("hidden"); // Show the button
+        updateStatus("Checked Out");
+        // Stop and reset the checkout timer
+        resetCheckoutTimer();
+    }
 
-        // Event listener for when the server responds with the user's check-in status
-        socket.on('responseCheckInStatus', (checkInStatus) => {
-            if (checkInStatus === "checkedIn") {
-                checkedIn = true;
-                toggleCheckInButton.classList.add("hidden"); // Hide the button
-                updateStatus("Checked In");
-            }
-        });
-    });
+    // Function to start the checkout timer
+    function startCheckoutTimer() {
+        // Clear any existing timers
+        clearInterval(checkoutTimer);
+
+        // Start a new timer for 30 seconds
+        checkoutTimer = setInterval(() => {
+            // Automatically check out the user after 30 seconds
+            checkOut();
+        }, 30000);
+    }
+
+    // Function to reset the checkout timer
+    function resetCheckoutTimer() {
+        // Clear any existing timers
+        clearInterval(checkoutTimer);
+    }
+
+    // Check if the user has previously checked in
+    const previousCheckInStatus = localStorage.getItem(localStorageKey);
+    const previousCheckInTimestamp = localStorage.getItem(localStorageTimestampKey);
+
+    if (previousCheckInStatus === "checkedIn" && previousCheckInTimestamp) {
+        const currentTime = Date.now();
+        const checkInTime = parseInt(previousCheckInTimestamp, 10);
+        const timeDifference = currentTime - checkInTime;
+
+        // Define the allowed check-in duration (30 seconds)
+        const allowedCheckInDuration = 30 * 1000;
+
+        if (timeDifference < allowedCheckInDuration) {
+            checkedIn = true;
+            toggleCheckInButton.classList.add("hidden"); // Hide the button
+            updateStatus("Checked In");
+            // Start the checkout timer
+            startCheckoutTimer();
+        } else {
+            // The allowed check-in duration has passed, so the user is checked out
+            localStorage.removeItem(localStorageKey);
+            localStorage.removeItem(localStorageTimestampKey);
+        }
+    }
 
     // Event listener for the Check-In button
     toggleCheckInButton.addEventListener("click", () => {
         if (!checkedIn) {
-            const currentTime = Date.now();
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((position) => {
                     const userLatitude = position.coords.latitude;
@@ -179,8 +218,13 @@
                         alert("You are not within 10 miles of the specified location. Check-in not allowed.");
                     }
                 }, (error) => {
-                    console.error('Error getting user location:', error);
-                    alert('Error getting your location. Please check your web settings and try again.');
+                    // Handle geolocation errors
+                    if (error.code === 1) {
+                        alert('Web settings error: Location access is denied. Please enable location access in your browser settings.');
+                    } else {
+                        console.error('API error getting user location:', error);
+                        alert('API error getting your location. Please try again later.');
+                    }
                 });
             } else {
                 alert('Geolocation is not supported by your browser.');
