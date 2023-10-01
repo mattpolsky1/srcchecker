@@ -36,6 +36,8 @@ function resetCheckIns() {
 
 setInterval(resetCheckIns, 60000); // Check every minute if it's time to reset
 
+let totalCheckIns = 0;
+
 io.on('connection', (socket) => {
     socket.on('checkIn', (userLocation) => {
         // Check if geolocation data is available
@@ -51,6 +53,12 @@ io.on('connection', (socket) => {
                     // Mark the user as checked in and store their last check-in time
                     checkedInUsers.set(socket.id, Date.now());
 
+                    // Increment the total check-in count
+                    totalCheckIns++;
+
+                    // Emit the updated count to all clients
+                    io.emit('updateCount', totalCheckIns);
+
                     // Emit the check-in success to the client
                     socket.emit('checkInSuccess');
 
@@ -58,6 +66,8 @@ io.on('connection', (socket) => {
                     setTimeout(() => {
                         if (checkedInUsers.has(socket.id)) {
                             checkedInUsers.delete(socket.id);
+                            totalCheckIns--; // Decrement the total count
+                            io.emit('updateCount', totalCheckIns); // Emit the updated count to all clients
                             socket.emit('checkedOutAutomatically');
                         }
                     }, CHECKIN_COOLDOWN);
@@ -79,11 +89,16 @@ io.on('connection', (socket) => {
         // Check if the user is checked in
         if (checkedInUsers.has(socket.id)) {
             checkedInUsers.delete(socket.id);
+
+            // Decrement the total check-in count
+            totalCheckIns--;
+
+            // Emit the updated count to all clients
+            io.emit('updateCount', totalCheckIns);
+
             socket.emit('checkedOut');
         }
     });
-});
-
 // Haversine formula to calculate distance between two points on the Earth's surface
 function getDistance(location1, location2) {
     const R = 6371; // Radius of the Earth in kilometers
