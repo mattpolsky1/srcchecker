@@ -60,7 +60,7 @@ io.on('connection', (socket) => {
 
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
-    
+
         // Check if the user is already checked in
         if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
@@ -70,31 +70,31 @@ io.on('connection', (socket) => {
                 const currentTime = Date.now();
                 const lastCheckInTime = lastCheckInTimes.get(socket.id);
                 const timeSinceLastCheckIn = currentTime - lastCheckInTime;
-    
+
                 // Check if the user is attempting to check in before the cooldown period (30 seconds) has passed
                 if (timeSinceLastCheckIn < 30000) {
                     socket.emit('checkInCooldown', 30000 - timeSinceLastCheckIn);
                     return; // Exit the function, preventing the check-in
                 }
             }
-    
+
             // Check if geolocation data is available
             if (userLocation && userLocation.latitude && userLocation.longitude) {
                 // Calculate the distance between user's location and the target location
                 const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                 const distance = getDistance(userLocation, targetLocation);
-    
+
                 // Check if the user is within 10 miles of the target location (3218.69 meters)
                 if (distance <= 16093.45) {
                     // Mark the user as checked in, store their socket ID, and record the check-in time
                     checkedInUsers.set(socket.id, true);
                     totalCheckIns++;
                     io.emit('updateCount', totalCheckIns);
-    
+
                     lastCheckInTimes.set(socket.id, Date.now()); // Record the check-in time
-    
+
                     // Automatically check out the user after 30 seconds
-                    const checkoutTimer = setTimeout(() => {
+                    setTimeout(() => {
                         if (checkedInUsers.get(socket.id)) {
                             checkedInUsers.delete(socket.id);
                             totalCheckIns--;
@@ -102,9 +102,6 @@ io.on('connection', (socket) => {
                             socket.emit('checkedOutAutomatically');
                         }
                     }, 30000); // 30 seconds
-    
-                    // Store the timer ID associated with the user
-                    checkedInUsers.set(`${socket.id}_timer`, checkoutTimer);
                 } else {
                     // Notify the client that check-in is not allowed
                     socket.emit('checkInNotAllowed');
