@@ -29,7 +29,6 @@ app.get('/', (req, res) => {
 });
 
 // Function to update the people count and reset check-ins at 8 PM
-// Function to update the people count and reset check-ins at 8 PM
 function updatePeopleCount() {
     const currentTime = Date.now();
 
@@ -44,16 +43,6 @@ function updatePeopleCount() {
     const checkInStartTimeInET = new Date(currentTimeInET);
     checkInStartTimeInET.setHours(8, 0, 0, 0);
 
-    // Define the gym closed time (8:00 PM to 8:00 AM)
-    const gymClosedStartTimeInET = new Date(currentTimeInET);
-    gymClosedStartTimeInET.setHours(20, 0, 0, 0);
-
-    const gymClosedEndTimeInET = new Date(currentTimeInET);
-    gymClosedEndTimeInET.setHours(8, 0, 0, 0);
-
-    // Check if it's gym closed time
-    const isGymClosed = currentTimeInET >= gymClosedStartTimeInET || currentTimeInET < gymClosedEndTimeInET;
-
     if (currentTimeInET >= resetTimeInET) {
         // Reset the count at 8:00 PM ET
         totalCheckIns = 0;
@@ -64,22 +53,10 @@ function updatePeopleCount() {
 
     // Emit the check-in availability status to clients
     const isCheckInAllowed = currentTimeInET >= checkInStartTimeInET && currentTimeInET < resetTimeInET;
-
-    // Update the button and message based on gym status
-    if (isGymClosed) {
-        toggleCheckInButton.classList.add("hidden"); // Hide the button
-        gymStatusLabel.textContent = "Gym Status: Closed"; // Update the message to indicate that the gym is closed
-    } else if (!isCheckInAllowed) {
-        toggleCheckInButton.classList.add("hidden"); // Hide the button
-        gymStatusLabel.textContent = "Gym Status: Not Allowed"; // Update the message to indicate that check-in is not allowed
-    } else {
-        toggleCheckInButton.classList.remove("hidden"); // Show the button
-        gymStatusLabel.textContent = "Gym Status: Empty"; // Reset the message to indicate that the gym is empty
-    }
+    io.emit('checkInAvailability', isCheckInAllowed);
 
     lastCheckInTime = currentTime;
 }
-
 
 io.on('connection', (socket) => {
     // Emit the current totalCheckIns count to the newly connected user
