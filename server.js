@@ -76,7 +76,6 @@ function updatePeopleCount() {
     lastCheckInTime = currentTime;
 }
 
-
 io.on('connection', (socket) => {
     // Emit the current totalCheckIns count to the newly connected user
     socket.emit('updateCount', totalCheckIns);
@@ -182,6 +181,7 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
