@@ -7,7 +7,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-let totalCheckIns = 0;
+let totalCheckIns = 60;
 let lastCheckInTime = 0;
 
 // Create a map to store checked-in users
