@@ -184,6 +184,18 @@ function getCheckInStatusFromCookie() {
     return { status, timestamp };
 }
 
+// Function to automatically check out the user after 30 seconds
+function autoCheckOut() {
+    if (checkedIn) {
+        checkedIn = false;
+        updateStatus("Checked Out");
+        toggleButtonVisibility(); // Show the button
+        // Remove check-in status and timestamp cookies
+        Cookies.remove('checkInStatus');
+        Cookies.remove('checkInTimestamp');
+    }
+}
+
 // Event listener for the Check-In button
 toggleCheckInButton.addEventListener("click", () => {
     if (!checkedIn) {
@@ -204,13 +216,8 @@ toggleCheckInButton.addEventListener("click", () => {
                     // Store check-in status and timestamp in cookies
                     setCheckInStatusInCookie("checkedIn", currentTime);
 
-                    // Set a timer to toggle the button's visibility after 30 seconds
-                    setTimeout(() => {
-                        toggleButtonVisibility();
-                        // Remove check-in status and timestamp cookies after 30 seconds
-                        Cookies.remove('checkInStatus');
-                        Cookies.remove('checkInTimestamp');
-                    }, 30000); // 30 seconds
+                    // Set a timer to automatically check out after 30 seconds
+                    setTimeout(autoCheckOut, 30000); // 30 seconds
 
                     socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
                 } else {
@@ -233,11 +240,8 @@ document.addEventListener("DOMContentLoaded", () => {
         checkedIn = true;
         updateStatus("Checked In");
         toggleButtonVisibility(); // Hide the button
-        // Set a timer to remove check-in status and timestamp cookies after 30 seconds
-        setTimeout(() => {
-            Cookies.remove('checkInStatus');
-            Cookies.remove('checkInTimestamp');
-        }, 30000); // 30 seconds
+        // Set a timer to automatically check out after 30 seconds
+        setTimeout(autoCheckOut, 30000); // 30 seconds
     }
 });
 
