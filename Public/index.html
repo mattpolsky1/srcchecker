@@ -122,7 +122,7 @@
 </div>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const peopleAtGymElement = document.getElementById("peopleAtGym");
@@ -170,7 +170,21 @@ function toggleButtonVisibility() {
     }
     checkInButtonVisible = !checkInButtonVisible; // Toggle the visibility flag
 }
-    // Event listener for the Check-In button
+
+// Function to store check-in status and timestamp in cookies
+function setCheckInStatusInCookie(status, timestamp) {
+    Cookies.set('checkInStatus', status);
+    Cookies.set('checkInTimestamp', timestamp);
+}
+
+// Function to get check-in status and timestamp from cookies
+function getCheckInStatusFromCookie() {
+    const status = Cookies.get('checkInStatus');
+    const timestamp = Cookies.get('checkInTimestamp');
+    return { status, timestamp };
+}
+
+// Event listener for the Check-In button
 toggleCheckInButton.addEventListener("click", () => {
     if (!checkedIn) {
         const currentTime = Date.now();
@@ -186,12 +200,19 @@ toggleCheckInButton.addEventListener("click", () => {
                     localStorage.setItem(localStorageKey, "checkedIn");
                     updateStatus("Checked In");
                     toggleButtonVisibility(); // Hide the button immediately
-                    socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
+
+                    // Store check-in status and timestamp in cookies
+                    setCheckInStatusInCookie("checkedIn", currentTime);
 
                     // Set a timer to toggle the button's visibility after 30 seconds
                     setTimeout(() => {
-                        toggleButtonVisibility(); // Show the button after 30 seconds
+                        toggleButtonVisibility();
+                        // Remove check-in status and timestamp cookies after 30 seconds
+                        Cookies.remove('checkInStatus');
+                        Cookies.remove('checkInTimestamp');
                     }, 30000); // 30 seconds
+
+                    socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
                 } else {
                     alert("You are not within 10 miles of the specified location. Check-in not allowed.");
                 }
@@ -202,6 +223,21 @@ toggleCheckInButton.addEventListener("click", () => {
         } else {
             alert('Geolocation is not supported by your browser.');
         }
+    }
+});
+
+// Check for stored check-in status and timestamp on page load
+document.addEventListener("DOMContentLoaded", () => {
+    const { status, timestamp } = getCheckInStatusFromCookie();
+    if (status === "checkedIn") {
+        checkedIn = true;
+        updateStatus("Checked In");
+        toggleButtonVisibility(); // Hide the button
+        // Set a timer to remove check-in status and timestamp cookies after 30 seconds
+        setTimeout(() => {
+            Cookies.remove('checkInStatus');
+            Cookies.remove('checkInTimestamp');
+        }, 30000); // 30 seconds
     }
 });
 
