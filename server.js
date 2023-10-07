@@ -3,6 +3,9 @@ const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
 
+// Require the express-force-https middleware
+const forceHttps = require('express-force-https');
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
@@ -21,6 +24,9 @@ const publicPath = path.join(__dirname, 'Public');
 
 // Serve static files from the "Public" directory
 app.use(express.static(publicPath));
+
+// Add the forceHttps middleware before other route handlers
+app.use(forceHttps);
 
 // Route handler for the root URL ("/")
 app.get('/', (req, res) => {
@@ -151,6 +157,7 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
