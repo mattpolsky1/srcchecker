@@ -82,7 +82,7 @@ io.on('connection', (socket) => {
                 const distance = getDistance(userLocation, targetLocation);
 
                 // Check if the user is within 10 miles of the target location (3218.69 meters)
-                if (distance <= 16093.45) {
+                if (distance <= 10000) {
                     // Mark the user as checked in, store their socket ID, and record the check-in time
                     checkedInUsers.set(socket.id, true);
                     totalCheckIns++;
