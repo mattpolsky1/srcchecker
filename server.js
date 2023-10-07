@@ -2,7 +2,9 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const cookieParser = require('cookie-parser'); // Require the cookie-parser middleware
+
+// Require the express-force-https middleware
+const forceHttps = require('express-force-https');
 
 const app = express();
 const server = http.createServer(app);
@@ -23,14 +25,8 @@ const publicPath = path.join(__dirname, 'Public');
 // Serve static files from the "Public" directory
 app.use(express.static(publicPath));
 
-// Require the express-force-https middleware
-const forceHttps = require('express-force-https');
-
 // Add the forceHttps middleware before other route handlers
 app.use(forceHttps);
-
-// Use cookie-parser middleware to parse cookies
-app.use(cookieParser());
 
 // Route handler for the root URL ("/")
 app.get('/', (req, res) => {
@@ -60,22 +56,16 @@ io.on('connection', (socket) => {
     // Emit the current totalCheckIns count to the newly connected user
     socket.emit('updateCount', totalCheckIns);
 
-    // Check if the user has a "checkInStatus" cookie
-    const checkInStatus = socket.handshake.headers.cookie
-        ? socket.handshake.headers.cookie.split('; ').find((cookie) => cookie.startsWith('checkInStatus='))
-        : null;
-
-    if (checkInStatus && checkInStatus.includes('checkInStatus=checkedIn')) {
+    // Check if the user is already checked in based on their socket ID
+    if (checkedInUsers.has(socket.id)) {
         socket.emit('alreadyCheckedIn');
     }
 
     socket.on('checkIn', (userLocation) => {
-        // Check if the user has a "checkInStatus" cookie
-        const checkInStatus = socket.handshake.headers.cookie
-            ? socket.handshake.headers.cookie.split('; ').find((cookie) => cookie.startsWith('checkInStatus='))
-            : null;
+        updatePeopleCount();
 
-        if (checkInStatus && checkInStatus.includes('checkInStatus=checkedIn')) {
+        // Check if the user is already checked in
+        if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
         } else {
             // Check if the user has a last check-in time recorded
@@ -113,14 +103,8 @@ io.on('connection', (socket) => {
                             totalCheckIns--;
                             io.emit('updateCount', totalCheckIns);
                             socket.emit('checkedOutAutomatically');
-
-                            // Remove the "checkInStatus" cookie to check the user out
-                            socket.emit('removeCheckInStatusCookie');
                         }
                     }, 30000); // 30 seconds
-
-                    // Set a "checkInStatus" cookie to indicate that the user is checked in
-                    socket.emit('setCheckInStatusCookie', 'checkedIn');
                 } else {
                     // Notify the client that check-in is not allowed
                     socket.emit('checkInNotAllowed');
@@ -173,7 +157,6 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
 
 
 
