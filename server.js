@@ -103,7 +103,8 @@ io.on('connection', (socket) => {
                             totalCheckIns--;
                             io.emit('updateCount', totalCheckIns);
                             socket.emit('checkedOutAutomatically');
-                            socket.emit('checkOut'); // Emit 'checkOut' event to update client
+                            // Emit 'checkOut' event to update the client
+                            io.emit('checkOut');
                         }
                     }, 30000); // 30 seconds
                 } else {
@@ -158,6 +159,7 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
