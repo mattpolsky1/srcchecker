@@ -181,6 +181,8 @@
                 resumeTimer(); // Resume the timer if applicable
             } else {
                 checkedIn = false;
+                // Request the current people count from the server
+                socket.emit('requestPeopleCount');
             }
         });
     });
@@ -195,6 +197,8 @@
         setTimeout(autoCheckOut, 30000); // 30 seconds
     } else {
         checkedIn = false;
+        // Request the current people count from the server
+        socket.emit('requestPeopleCount');
     }
 
     let checkInButtonVisible = true; // Track the visibility of the button
@@ -291,6 +295,10 @@
         localStorage.removeItem('checkInTimestamp');
     });
 
+    socket.on('currentPeopleCount', (count) => {
+        updateCount(count);
+    });
+
     function updateCount(count) {
         peopleAtGymElement.textContent = count;
         if (count > 50) {
@@ -303,8 +311,7 @@
     }
 
     function updateStatus(status) {
-        statusLabel.textContent = status;
-        statusLabel.style.color = status === "Checked In" ? "#295296" : "#FF5733"; // Blue for Checked In, Red for Checked Out
+        statusLabel.textContent = `Status: ${status}`;
     }
 
     // Haversine formula to calculate distance between two points on the Earth's surface
@@ -332,6 +339,7 @@
     function toRadians(degrees) {
         return degrees * (Math.PI / 180);
     }
+</script>
 </script>
 </script>
 </body>
