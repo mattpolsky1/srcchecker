@@ -16,9 +16,6 @@ let lastCheckInTime = 0;
 // Create a map to store checked-in users
 const checkedInUsers = new Map();
 
-// Create a map to store the last check-in time for each user
-const lastCheckInTimes = new Map();
-
 // Define the path to your static files directory
 const publicPath = path.join(__dirname, 'Public');
 
@@ -58,6 +55,7 @@ io.on('connection', (socket) => {
 
     // Check if the user is already checked in based on their socket ID
     if (checkedInUsers.has(socket.id)) {
+        // Emit 'alreadyCheckedIn' event to update the client
         socket.emit('alreadyCheckedIn');
     }
 
@@ -66,6 +64,7 @@ io.on('connection', (socket) => {
 
         // Check if the user is already checked in
         if (checkedInUsers.has(socket.id)) {
+            // Emit 'alreadyCheckedIn' event to update the client
             socket.emit('alreadyCheckedIn');
         } else {
             // Check if the user has a last check-in time recorded
@@ -103,8 +102,7 @@ io.on('connection', (socket) => {
                             totalCheckIns--;
                             io.emit('updateCount', totalCheckIns);
                             socket.emit('checkedOutAutomatically');
-                            // Emit 'checkOut' event to update the client
-                            io.emit('checkOut');
+                            socket.emit('checkOut'); // Emit 'checkOut' event to update client
                         }
                     }, 30000); // 30 seconds
                 } else {
@@ -159,6 +157,7 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
