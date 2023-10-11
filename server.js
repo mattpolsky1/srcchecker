@@ -11,7 +11,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-app.use(session({ secret: 'your-secret-key', resave: true, saveUninitialized: true }));
+app.use(session({ secret: '2003', resave: true, saveUninitialized: true }));
 
 let totalCheckIns = 60;
 let lastCheckInTime = 0;
