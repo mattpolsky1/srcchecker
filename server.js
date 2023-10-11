@@ -1,5 +1,4 @@
 const express = require('express');
-const session = require('express-session');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
@@ -10,8 +9,6 @@ const forceHttps = require('express-force-https');
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
-
-app.use(session({ secret: '2003', resave: true, saveUninitialized: true }));
 
 let totalCheckIns = 60;
 let lastCheckInTime = 0;
@@ -67,60 +64,56 @@ io.on('connection', (socket) => {
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
 
-        const session = socket.request.session;
-
-        if (session && session.userId) {
-            // User is already logged in; do not allow check-in.
+        // Check if the user is already checked in
+        if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
-            return;
-        }
+        } else {
+            // Check if the user has a last check-in time recorded
+            if (lastCheckInTimes.has(socket.id)) {
+                const currentTime = Date.now();
+                const lastCheckInTime = lastCheckInTimes.get(socket.id);
+                const timeSinceLastCheckIn = currentTime - lastCheckInTime;
 
-        // Check if the user has a last check-in time recorded
-        if (lastCheckInTimes.has(socket.id)) {
-            const currentTime = Date.now();
-            const lastCheckInTime = lastCheckInTimes.get(socket.id);
-            const timeSinceLastCheckIn = currentTime - lastCheckInTime;
-
-            // Check if the user is attempting to check in before the cooldown period (30 seconds) has passed
-            if (timeSinceLastCheckIn < 30000) {
-                socket.emit('checkInCooldown', 30000 - timeSinceLastCheckIn);
-                return; // Exit the function, preventing the check-in
+                // Check if the user is attempting to check in before the cooldown period (30 seconds) has passed
+                if (timeSinceLastCheckIn < 30000) {
+                    socket.emit('checkInCooldown', 30000 - timeSinceLastCheckIn);
+                    return; // Exit the function, preventing the check-in
+                }
             }
-        }
 
-        // Check if geolocation data is available
-        if (userLocation && userLocation.latitude && userLocation.longitude) {
-            // Calculate the distance between user's location and the target location
-            const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
-            const distance = getDistance(userLocation, targetLocation);
+            // Check if geolocation data is available
+            if (userLocation && userLocation.latitude && userLocation.longitude) {
+                // Calculate the distance between user's location and the target location
+                const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
+                const distance = getDistance(userLocation, targetLocation);
 
-            // Check if the user is within 10 miles of the target location (3218.69 meters)
-            if (distance <= 10000) {
-                // Mark the user as checked in, store their socket ID, and record the check-in time
-                checkedInUsers.set(socket.id, true);
-                totalCheckIns++;
-                io.emit('updateCount', totalCheckIns);
+                // Check if the user is within 10 miles of the target location (3218.69 meters)
+                if (distance <= 10000) {
+                    // Mark the user as checked in, store their socket ID, and record the check-in time
+                    checkedInUsers.set(socket.id, true);
+                    totalCheckIns++;
+                    io.emit('updateCount', totalCheckIns);
 
-                lastCheckInTimes.set(socket.id, Date.now()); // Record the check-in time
+                    lastCheckInTimes.set(socket.id, Date.now()); // Record the check-in time
 
-                // Automatically check out the user after 30 seconds
-                setTimeout(() => {
-                    // Check if the user is still checked in (based on session)
-                    if (session.userId) {
-                        checkedInUsers.delete(socket.id);
-                        totalCheckIns--;
-                        io.emit('updateCount', totalCheckIns);
-                        socket.emit('checkedOutAutomatically');
-                        socket.emit('checkOut'); // Emit 'checkOut' event to update client
-                    }
-                }, 30000); // 30 seconds
+                    // Automatically check out the user after 30 seconds
+                    setTimeout(() => {
+                        if (checkedInUsers.get(socket.id)) {
+                            checkedInUsers.delete(socket.id);
+                            totalCheckIns--;
+                            io.emit('updateCount', totalCheckIns);
+                            socket.emit('checkedOutAutomatically');
+                            socket.emit('checkOut'); // Emit 'checkOut' event to update client
+                        }
+                    }, 30000); // 30 seconds
+                } else {
+                    // Notify the client that check-in is not allowed
+                    socket.emit('checkInNotAllowed');
+                }
             } else {
-                // Notify the client that check-in is not allowed
+                // Handle the case where geolocation data is not available
                 socket.emit('checkInNotAllowed');
             }
-        } else {
-            // Handle the case where geolocation data is not available
-            socket.emit('checkInNotAllowed');
         }
     });
 
@@ -165,6 +158,52 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
