@@ -137,28 +137,24 @@ const localStorageKey = "checkInStatus";
 
 // Check if the user has previously checked in
 function resumeTimer() {
-    const checkInTimestamp = localStorage.getItem('checkInTimestamp');
-    if (checkInTimestamp) {
-        const currentTime = Date.now();
-        const timeElapsed = currentTime - parseInt(checkInTimestamp, 10);
-        const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
-        if (remainingTime > 0) {
-            checkedIn = true;
-            toggleButtonVisibility(); // Hide the button
-            setTimeout(() => {
-                autoCheckOut();
-                toggleCheckInButton.classList.remove("hidden"); // Show the button after check-out
-            }, remainingTime);
-        } else {
-            // Timer has expired, check the user out
-            localStorage.removeItem('checkInTimestamp');
-            checkedIn = false;
-            updateStatus("Checked Out");
-            toggleButtonVisibility(); // Show the button
+        const checkInTimestamp = localStorage.getItem('checkInTimestamp');
+        if (checkInTimestamp) {
+            const currentTime = Date.now();
+            const timeElapsed = currentTime - parseInt(checkInTimestamp, 10);
+            const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
+            if (remainingTime > 0) {
+                checkedIn = true;
+                setTimeout(autoCheckOut, remainingTime);
+                toggleButtonVisibility(); // Hide the button
+            } else {
+                // Timer has expired, check the user out
+                localStorage.removeItem('checkInTimestamp');
+                checkedIn = false;
+                updateStatus("Checked Out");
+                toggleButtonVisibility(); // Show the button
+            }
         }
     }
-}
-
 
     // Check if the user has previously checked in
     const previousCheckInStatus = localStorage.getItem(localStorageKey);
@@ -171,28 +167,29 @@ function resumeTimer() {
 
     // Event listener for when the page is fully loaded
     document.addEventListener("DOMContentLoaded", () => {
-    // Request the user's check-in status from the server
-    socket.emit('requestCheckInStatus');
+        // Request the user's check-in status from the server
+        socket.emit('requestCheckInStatus');
 
-    // Event listener for when the server responds with the user's check-in status
-    socket.on('responseCheckInStatus', (checkInStatus) => {
-        if (checkInStatus === "checkedIn") {
-            checkedIn = true;
-            toggleCheckInButton.classList.add("hidden"); // Hide the button
-            updateStatus("Checked In");
-            resumeTimer(); // Resume the timer if applicable
-        }
+        // Event listener for when the server responds with the user's check-in status
+        socket.on('responseCheckInStatus', (checkInStatus) => {
+            if (checkInStatus === "checkedIn") {
+                checkedIn = true;
+                toggleCheckInButton.classList.add("hidden"); // Hide the button
+                updateStatus("Checked In");
+                resumeTimer(); // Resume the timer if applicable
+            }
+        });
     });
-});
 
     // Check for stored check-in status and timestamp on page load
     const { status, timestamp } = getCheckInStatusFromCookie();
-if (status === "checkedIn") {
-    checkedIn = true;
-    toggleCheckInButton.classList.add("hidden"); // Hide the button
-    updateStatus("Checked In");
-    resumeTimer(); // Resume the timer if applicable
-}
+    if (status === "checkedIn") {
+        checkedIn = true;
+        updateStatus("Checked In");
+        toggleButtonVisibility(); // Hide the button
+        // Set a timer to automatically check out after 30 seconds
+        setTimeout(autoCheckOut, 30000); // 30 seconds
+    }
 
 let checkInButtonVisible = true; // Track the visibility of the button
 
@@ -209,8 +206,8 @@ function toggleButtonVisibility() {
 
 // Function to store check-in status and timestamp in cookies
 function setCheckInStatusInCookie(status, timestamp) {
-    Cookies.set('checkInStatus', status, { expires: 1 }); // Expires in 1 day
-    Cookies.set('checkInTimestamp', timestamp, { expires: 1 });
+    Cookies.set('checkInStatus', status);
+    Cookies.set('checkInTimestamp', timestamp);
 }
 
 // Function to get check-in status and timestamp from cookies
