@@ -61,6 +61,19 @@ io.on('connection', (socket) => {
         socket.emit('alreadyCheckedIn');
     }
 
+    // Request the user's check-in status from the server on connection
+    socket.emit('requestCheckInStatus');
+
+    // Event listener for when the server responds with the user's check-in status
+    socket.on('responseCheckInStatus', (checkInStatus) => {
+        if (checkInStatus === "checkedIn") {
+            checkedIn = true;
+            toggleCheckInButton.classList.add("hidden"); // Hide the button
+            updateStatus("Checked In");
+            resumeTimer(); // Resume the timer if applicable
+        }
+    });
+
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
 

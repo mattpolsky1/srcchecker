@@ -171,19 +171,19 @@ function resumeTimer() {
 
     // Event listener for when the page is fully loaded
     document.addEventListener("DOMContentLoaded", () => {
-        // Request the user's check-in status from the server
-        socket.emit('requestCheckInStatus');
+    // Request the user's check-in status from the server
+    socket.emit('requestCheckInStatus');
 
-        // Event listener for when the server responds with the user's check-in status
-        socket.on('responseCheckInStatus', (checkInStatus) => {
-            if (checkInStatus === "checkedIn") {
-                checkedIn = true;
-                toggleCheckInButton.classList.add("hidden"); // Hide the button
-                updateStatus("Checked In");
-                resumeTimer(); // Resume the timer if applicable
-            }
-        });
+    // Event listener for when the server responds with the user's check-in status
+    socket.on('responseCheckInStatus', (checkInStatus) => {
+        if (checkInStatus === "checkedIn") {
+            checkedIn = true;
+            toggleCheckInButton.classList.add("hidden"); // Hide the button
+            updateStatus("Checked In");
+            resumeTimer(); // Resume the timer if applicable
+        }
     });
+});
 
     // Check for stored check-in status and timestamp on page load
     const { status, timestamp } = getCheckInStatusFromCookie();
