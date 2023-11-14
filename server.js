@@ -60,7 +60,7 @@ io.on('connection', (socket) => {
 
     socket.on('checkIn', (userLocation) => {
         updatePeopleCount();
-
+    
         if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
         } else {
@@ -68,31 +68,31 @@ io.on('connection', (socket) => {
                 const currentTime = Date.now();
                 const lastCheckInTime = lastCheckInTimes.get(socket.id);
                 const timeSinceLastCheckIn = currentTime - lastCheckInTime;
-
+    
                 if (timeSinceLastCheckIn < 30000) {
                     socket.emit('checkInCooldown', 30000 - timeSinceLastCheckIn);
                     return;
                 }
             }
-
+    
             if (userLocation && userLocation.latitude && userLocation.longitude) {
                 const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                 const distance = getDistance(userLocation, targetLocation);
-
+    
                 if (distance <= 10000) {
                     checkedInUsers.set(socket.id, true);
                     checkedInUsersCount++;
                     totalCheckIns = checkedInUsersCount;
-                    io.emit('updateCount', totalCheckIns);
-
+                    updateCount(); // Broadcast the updated count to all clients
+    
                     lastCheckInTimes.set(socket.id, Date.now());
-
+    
                     setTimeout(() => {
                         if (checkedInUsers.get(socket.id)) {
                             checkedInUsers.delete(socket.id);
                             checkedInUsersCount--;
                             totalCheckIns = checkedInUsersCount;
-                            io.emit('updateCount', totalCheckIns);
+                            updateCount(); // Broadcast the updated count to all clients
                             socket.emit('checkedOutAutomatically');
                             socket.emit('checkOut');
                         }
@@ -105,16 +105,15 @@ io.on('connection', (socket) => {
             }
         }
     });
-
+    
     socket.on('checkOut', () => {
         if (checkedInUsers.has(socket.id)) {
             checkedInUsers.delete(socket.id);
             checkedInUsersCount--;
             totalCheckIns = checkedInUsersCount;
-            io.emit('updateCount', totalCheckIns);
+            updateCount(); // Broadcast the updated count to all clients
         }
     });
-});
 
 function getDistance(location1, location2) {
     const R = 6371;

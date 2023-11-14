@@ -187,13 +187,12 @@ function resumeTimer() {
 
     // Check for stored check-in status and timestamp on page load
     const { status, timestamp } = getCheckInStatusFromCookie();
-    if (status === "checkedIn") {
-        checkedIn = true;
-        updateStatus("Checked In");
-        toggleButtonVisibility(); // Hide the button
-        // Set a timer to automatically check out after 30 seconds
-        setTimeout(autoCheckOut, 30000); // 30 seconds
-    }
+if (status === "checkedIn") {
+    checkedIn = true;
+    toggleCheckInButton.classList.add("hidden"); // Hide the button
+    updateStatus("Checked In");
+    resumeTimer(); // Resume the timer if applicable
+}
 
 let checkInButtonVisible = true; // Track the visibility of the button
 
@@ -210,8 +209,8 @@ function toggleButtonVisibility() {
 
 // Function to store check-in status and timestamp in cookies
 function setCheckInStatusInCookie(status, timestamp) {
-    Cookies.set('checkInStatus', status);
-    Cookies.set('checkInTimestamp', timestamp);
+    Cookies.set('checkInStatus', status, { expires: 1 }); // Expires in 1 day
+    Cookies.set('checkInTimestamp', timestamp, { expires: 1 });
 }
 
 // Function to get check-in status and timestamp from cookies
