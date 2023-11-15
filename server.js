@@ -2,13 +2,14 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-
-// Require the express-force-https middleware
-const forceHttps = require('express-force-https');
+const redis = require('redis');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
+
+// Create a Redis client
+const redisClient = redis.createClient();
 
 let totalCheckIns = 60;
 let lastCheckInTime = 0;
@@ -24,9 +25,6 @@ const publicPath = path.join(__dirname, 'Public');
 
 // Serve static files from the "Public" directory
 app.use(express.static(publicPath));
-
-// Add the forceHttps middleware before other route handlers
-app.use(forceHttps);
 
 // Route handler for the root URL ("/")
 app.get('/', (req, res) => {
@@ -96,6 +94,14 @@ io.on('connection', (socket) => {
 
                     lastCheckInTimes.set(socket.id, Date.now()); // Record the check-in time
 
+                    // Store user data in Redis
+                    redisClient.hmset(socket.id, {
+                        'checkedIn': true,
+                        'lastCheckInTime': Date.now(),
+                        'latitude': userLocation.latitude,
+                        'longitude': userLocation.longitude
+                    });
+
                     // Automatically check out the user after 30 seconds
                     setTimeout(() => {
                         if (checkedInUsers.get(socket.id)) {
@@ -104,6 +110,9 @@ io.on('connection', (socket) => {
                             io.emit('updateCount', totalCheckIns);
                             socket.emit('checkedOutAutomatically');
                             socket.emit('checkOut'); // Emit 'checkOut' event to update client
+                            
+                            // Remove user data from Redis
+                            redisClient.del(socket.id);
                         }
                     }, 30000); // 30 seconds
                 } else {
@@ -123,6 +132,9 @@ io.on('connection', (socket) => {
             checkedInUsers.delete(socket.id);
             totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
+
+            // Remove user data from Redis
+            redisClient.del(socket.id);
         }
     });
 });
