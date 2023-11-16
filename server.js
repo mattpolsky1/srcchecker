@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const { MongoClient, serverApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = "mongodb+srv://mattpolsky:<Manning01!>@cluster0.ev0u1hj.mongodb.net/?retryWrites=true&w=majority";
 
 const client = new MongoClient(uri, {
