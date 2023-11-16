@@ -235,6 +235,9 @@ function autoCheckOut() {
         // Remove check-in status and timestamp cookies
         Cookies.remove('checkInStatus');
         Cookies.remove('checkInTimestamp');
+        
+        // Notify the server about the check-out
+        socket.emit('checkOut');
     }
 }
 
