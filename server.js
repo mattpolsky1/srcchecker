@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const { MongoClient } = require('mongodb');
+const { MongoClient, serverApiVersion } = require('mongodb');
 const uri = "mongodb+srv://mattpolsky:<Manning01!>@cluster0.ev0u1hj.mongodb.net/?retryWrites=true&w=majority";
 
 const client = new MongoClient(uri, {
@@ -12,9 +12,10 @@ const client = new MongoClient(uri, {
       deprecationErrors: true,
     }
   });
+  
   async function run() {
     try {
-      // Connect the client to the server	(optional starting in v4.7)
+      // Connect the client to the server (optional starting in v4.7)
       await client.connect();
       // Send a ping to confirm a successful connection
       await client.db("admin").command({ ping: 1 });
@@ -25,7 +26,7 @@ const client = new MongoClient(uri, {
     }
   }
   run().catch(console.dir);
-  
+
 // Require the express-force-https middleware
 const forceHttps = require('express-force-https');
 
