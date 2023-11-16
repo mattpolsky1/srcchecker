@@ -2,21 +2,13 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const redis = require('redis');
+
+// Require the express-force-https middleware
+const forceHttps = require('express-force-https');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
-
-const redisClient = redis.createClient();
-
-redisClient.on('connect', () => {
-    console.log('Connected to Redis');
-});
-
-redisClient.on('error', (err) => {
-    console.error(`Error connecting to Redis: ${err}`);
-});
 
 let totalCheckIns = 60;
 let lastCheckInTime = 0;
@@ -27,10 +19,18 @@ const checkedInUsers = new Map();
 // Create a map to store the last check-in time for each user
 const lastCheckInTimes = new Map();
 
-app.use(express.static(path.join(__dirname, 'Public')));
+// Define the path to your static files directory
+const publicPath = path.join(__dirname, 'Public');
 
+// Serve static files from the "Public" directory
+app.use(express.static(publicPath));
+
+// Add the forceHttps middleware before other route handlers
+app.use(forceHttps);
+
+// Route handler for the root URL ("/")
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, 'Public', 'index.html');
+    const indexPath = path.join(publicPath, 'index.html');
     res.sendFile(indexPath);
 });
 
@@ -96,9 +96,6 @@ io.on('connection', (socket) => {
 
                     lastCheckInTimes.set(socket.id, Date.now()); // Record the check-in time
 
-                    // Example: Update totalCheckIns in Redis
-                    redisClient.set('totalCheckIns', totalCheckIns);
-
                     // Automatically check out the user after 30 seconds
                     setTimeout(() => {
                         if (checkedInUsers.get(socket.id)) {
@@ -107,9 +104,6 @@ io.on('connection', (socket) => {
                             io.emit('updateCount', totalCheckIns);
                             socket.emit('checkedOutAutomatically');
                             socket.emit('checkOut'); // Emit 'checkOut' event to update client
-
-                            // Example: Update totalCheckIns in Redis after automatic checkout
-                            redisClient.set('totalCheckIns', totalCheckIns);
                         }
                     }, 30000); // 30 seconds
                 } else {
@@ -129,9 +123,6 @@ io.on('connection', (socket) => {
             checkedInUsers.delete(socket.id);
             totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
-
-            // Example: Update totalCheckIns in Redis after manual checkout
-            redisClient.set('totalCheckIns', totalCheckIns);
         }
     });
 });
@@ -167,144 +158,3 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
