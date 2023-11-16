@@ -2,8 +2,8 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const { MongoClient, ServerApiVersion } = require('mongodb');
 
+const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.ev0u1hj.mongodb.net/?retryWrites=true&w=majority";
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -13,7 +13,6 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
-
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -26,8 +25,8 @@ async function run() {
     await client.close();
   }
 }
-
 run().catch(console.dir);
+
 
 const app = express();
 const server = http.createServer(app);
@@ -119,12 +118,6 @@ io.on('connection', async (socket) => {
                         socket.emit('checkInNotAllowed');
                     }
                 }
-
-                // Call the function to log daily check-ins
-                await logDailyCheckIns();
-
-                // Call the function to log hourly check-ins
-                await logHourlyCheckIns();
             } catch (error) {
                 console.error('Error handling check-in:', error);
             }
@@ -180,13 +173,20 @@ io.on('connection', async (socket) => {
 
                     hourlyCheckInsCount = hourlyCheckIns.length; // Update hourly check-in count
 
-                    console.log('Hourly check-ins data:', hourlyCheckIns);
+                    console.log('Hourly check-ins data:', hourlyCheckIns); // Add this line
+
                     io.emit('hourlyCheckIns', { hour: currentHour, count: hourlyCheckInsCount });
                 }
             } catch (error) {
                 console.error('Error logging hourly check-ins:', error);
             }
         }
+
+        // Call the function to log daily check-ins
+        await logDailyCheckIns();
+
+        // Call the function to log hourly check-ins
+        await logHourlyCheckIns();
     } catch (error) {
         console.error('Error in socket connection:', error);
     }
@@ -226,8 +226,8 @@ function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
 
-//const PORT = process.env.PORT || 1;
+const PORT = process.env.PORT || 1505;
 
-//server.listen(PORT, () => {
-   // console.log(`Server is running on port ${PORT}`);
-//});
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
