@@ -4,28 +4,30 @@ const socketIO = require('socket.io');
 const path = require('path');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
-const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.mongodb.net/CampusHoops?retryWrites=true&w=majority";
-
+const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.ev0u1hj.mongodb.net/?retryWrites=true&w=majority";
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    }
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
 });
 
 async function run() {
-    try {
-        await client.connect();
-        await client.db().command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    } catch (error) {
-        console.error('Error connecting to MongoDB:', error);
-    } finally {
-        // Ensure that the client will close when you finish/error
-        await client.close();
-    }
+  try {
+    // Connect the client to the server	(optional starting in v4.7)
+    await client.connect();
+    // Send a ping to confirm a successful connection
+    await client.db("CampusHoops").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
+  }
 }
+
+run().catch(console.dir);
 
 const app = express();
 const server = http.createServer(app);
@@ -117,6 +119,12 @@ io.on('connection', async (socket) => {
                         socket.emit('checkInNotAllowed');
                     }
                 }
+
+                // Call the function to log daily check-ins
+                await logDailyCheckIns();
+
+                // Call the function to log hourly check-ins
+                await logHourlyCheckIns();
             } catch (error) {
                 console.error('Error handling check-in:', error);
             }
@@ -172,20 +180,13 @@ io.on('connection', async (socket) => {
 
                     hourlyCheckInsCount = hourlyCheckIns.length; // Update hourly check-in count
 
-                    console.log('Hourly check-ins data:', hourlyCheckIns); // Add this line
-
+                    console.log('Hourly check-ins data:', hourlyCheckIns);
                     io.emit('hourlyCheckIns', { hour: currentHour, count: hourlyCheckInsCount });
                 }
             } catch (error) {
                 console.error('Error logging hourly check-ins:', error);
             }
         }
-
-        // Call the function to log daily check-ins
-        await logDailyCheckIns();
-
-        // Call the function to log hourly check-ins
-        await logHourlyCheckIns();
     } catch (error) {
         console.error('Error in socket connection:', error);
     }
@@ -225,8 +226,8 @@ function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
 
-const PORT = process.env.PORT || 2;
+//const PORT = process.env.PORT || 1;
 
-server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+//server.listen(PORT, () => {
+   // console.log(`Server is running on port ${PORT}`);
+//});
