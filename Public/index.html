@@ -181,6 +181,15 @@ function resumeTimer() {
         });
     });
 
+    socket.on('dailyCheckIns', (data) => {
+    console.log(`Number of check-ins on ${data.date.toDateString()}: ${data.count}`);
+});
+
+// Event listener for hourly check-ins
+socket.on('hourlyCheckIns', (data) => {
+    console.log(`Number of check-ins this hour (${data.hour}:00 - ${data.hour + 1}:00): ${data.count}`);
+});
+
     // Check for stored check-in status and timestamp on page load
     const { status, timestamp } = getCheckInStatusFromCookie();
     if (status === "checkedIn") {
