@@ -5,6 +5,7 @@
     "express-force-https": "^1.0.0",
     "express-session": "^1.17.3",
     "http": "^0.0.1-security",
+    "mongodb": "^6.2.0",
     "socket.io": "^4.7.2",
     "uuid": "^9.0.1"
   }
