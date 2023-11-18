@@ -13,20 +13,21 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
 async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("CampusHoops").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
+    try {
+        console.log("Trying to connect to MongoDB...");
+        // Connect the client to the server (optional starting in v4.7)
+        await client.connect();
+        // Send a ping to confirm a successful connection
+        await client.db("CampusHoops").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } finally {
+        // Ensures that the client will close when you finish/error
+        await client.close();
+    }
 }
 run().catch(console.dir);
-
 
 const app = express();
 const server = http.createServer(app);
@@ -61,6 +62,8 @@ function updatePeopleCount() {
 
 io.on('connection', async (socket) => {
     try {
+        console.log(`A user connected with socket id: ${socket.id}`);
+
         socket.emit('updateCount', totalCheckIns);
 
         if (checkedInUsers.has(socket.id)) {
@@ -69,6 +72,7 @@ io.on('connection', async (socket) => {
 
         socket.on('checkIn', async (userLocation) => {
             try {
+                console.log(`Received checkIn event from socket id: ${socket.id}`);
                 updatePeopleCount();
 
                 if (checkedInUsers.has(socket.id)) {
@@ -124,6 +128,7 @@ io.on('connection', async (socket) => {
         });
 
         socket.on('checkOut', () => {
+            console.log(`Received checkOut event from socket id: ${socket.id}`);
             if (checkedInUsers.has(socket.id)) {
                 checkedInUsers.delete(socket.id);
                 totalCheckIns--;
@@ -226,7 +231,7 @@ function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
 
-const PORT = process.env.PORT || 1505;
+const PORT = process.env.PORT || 1615;
 
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
