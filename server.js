@@ -134,6 +134,9 @@ io.on('connection', async (socket) => {
                 totalCheckIns--;
                 io.emit('updateCount', totalCheckIns);
             }
+        
+            // Remove the 'checkedOutAutomatically' flag from local storage
+            socket.emit('removeCheckedOutAutomaticallyFlag');
         });
 
         socket.on('requestInitialCount', () => {

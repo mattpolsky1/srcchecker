@@ -168,9 +168,10 @@ function resumeTimer() {
 
     function initializeCheckIn() {
     const { status, timestamp } = getCheckInStatusFromCookie();
+    const checkedOutAutomatically = localStorage.getItem('checkedOutAutomatically');
 
-    // Check if the user has previously checked in
-    if (status === "checkedIn") {
+    // Check if the user has previously checked in and not auto-checked out
+    if (status === "checkedIn" && !checkedOutAutomatically) {
         checkedIn = true;
         updateStatus("Checked In");
         toggleButtonVisibility(); // Hide the button
@@ -183,24 +184,21 @@ function resumeTimer() {
             // Set a timer to automatically check out after remaining time
             setTimeout(autoCheckOut, remainingTime);
         } else {
-            // Timer has expired, check if the user has been auto-checked out
-            if (localStorage.getItem('checkedOutAutomatically')) {
-                // User has been auto-checked out, perform necessary actions
-                checkedIn = false;
-                updateStatus("Checked Out");
-                toggleButtonVisibility(); // Show the button
-
-                // Remove check-in status and timestamp cookies
-                Cookies.remove('checkInStatus');
-                Cookies.remove('checkInTimestamp');
-
-                // Notify the server about the check-out
-                socket.emit('checkOut');
-            } else {
-                // User has not been auto-checked out, set a timer for automatic check-out
-                setTimeout(autoCheckOut, remainingTime);
-            }
+            // Timer has expired, set a timer for automatic check-out
+            setTimeout(autoCheckOut, remainingTime);
         }
+    } else if (checkedOutAutomatically) {
+        // User has been auto-checked out, perform necessary actions
+        checkedIn = false;
+        updateStatus("Checked Out");
+        toggleButtonVisibility(); // Show the button
+
+        // Remove check-in status and timestamp cookies
+        Cookies.remove('checkInStatus');
+        Cookies.remove('checkInTimestamp');
+
+        // Notify the server about the check-out
+        socket.emit('checkOut');
     }
 }
 
@@ -216,6 +214,10 @@ function resumeTimer() {
         }
     });
 });
+
+socket.on('removeCheckedOutAutomaticallyFlag', () => {
+        localStorage.removeItem('checkedOutAutomatically');
+    });
 
     socket.on('dailyCheckIns', (data) => {
     console.log(`Number of check-ins on ${data.date.toDateString()}: ${data.count}`);
@@ -273,6 +275,9 @@ function autoCheckOut() {
         
         // Notify the server about the check-out
         socket.emit('checkOut');
+
+        // Set a flag in local storage to indicate automatic checkout
+        localStorage.setItem('checkedOutAutomatically', 'true');
     }
 }
 
