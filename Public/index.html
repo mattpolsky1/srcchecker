@@ -201,8 +201,14 @@ function resumeTimer() {
                 setTimeout(autoCheckOut, remainingTime);
             }
         }
+    } else {
+        // The user is not checked in, ensure the UI reflects the correct status
+        checkedIn = false;
+        updateStatus("Checked Out");
+        toggleButtonVisibility(); // Show the button
     }
 }
+
 
 
     // Event listener for when the page is fully loaded
