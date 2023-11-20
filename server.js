@@ -58,7 +58,7 @@ function updatePeopleCount() {
 
 io.on('connection', async (socket) => {
     try {
-        socket.emit('updateCount', totalCheckIns);
+        socket.emit('initCount', totalCheckIns);
 
         if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
@@ -128,7 +128,10 @@ io.on('connection', async (socket) => {
             }
         });
 
-        // Function to log daily check-ins
+        socket.on('requestInitialCount', () => {
+            socket.emit('initCount', totalCheckIns);
+        });
+
         async function logDailyCheckIns() {
             try {
                 const db = client.db('CampusHoops');
@@ -150,7 +153,6 @@ io.on('connection', async (socket) => {
             }
         }
 
-        // Function to log hourly check-ins (from 8:00 AM to 8:00 PM)
         async function logHourlyCheckIns() {
             try {
                 const db = client.db('CampusHoops');
@@ -174,10 +176,7 @@ io.on('connection', async (socket) => {
             }
         }
 
-        // Call the function to log daily check-ins
         logDailyCheckIns();
-
-        // Call the function to log hourly check-ins
         logHourlyCheckIns();
     } catch (error) {
         console.error('Error in socket connection:', error);

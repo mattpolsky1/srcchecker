@@ -137,27 +137,24 @@ const localStorageKey = "checkInStatus";
 
 // Check if the user has previously checked in
 function resumeTimer() {
-    const checkInTimestamp = localStorage.getItem('checkInTimestamp');
-    if (checkInTimestamp) {
-        const currentTime = Date.now();
-        const timeElapsed = currentTime - parseInt(checkInTimestamp, 10);
-        const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
-        if (remainingTime > 0) {
-            checkedIn = true;
-            setTimeout(autoCheckOut, remainingTime);
-            toggleButtonVisibility(); // Hide the button
-        } else {
-            // Timer has expired, check the user out
-            localStorage.removeItem('checkInTimestamp');
-            checkedIn = false;
-            updateStatus("Checked Out");
-            toggleButtonVisibility(); // Show the button
-            // Notify the server about the check-out
-            socket.emit('checkOut');
-            // Ensure that the server-side 'checkOut' event is triggered here
+        const checkInTimestamp = localStorage.getItem('checkInTimestamp');
+        if (checkInTimestamp) {
+            const currentTime = Date.now();
+            const timeElapsed = currentTime - parseInt(checkInTimestamp, 10);
+            const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
+            if (remainingTime > 0) {
+                checkedIn = true;
+                setTimeout(autoCheckOut, remainingTime);
+                toggleButtonVisibility(); // Hide the button
+            } else {
+                // Timer has expired, check the user out
+                localStorage.removeItem('checkInTimestamp');
+                checkedIn = false;
+                updateStatus("Checked Out");
+                toggleButtonVisibility(); // Show the button
+            }
         }
     }
-}
 
     // Check if the user has previously checked in
     const previousCheckInStatus = localStorage.getItem(localStorageKey);
@@ -250,9 +247,6 @@ function getCheckInStatusFromCookie() {
 }
 
 // Function to automatically check out the user after 30 seconds
-resumeTimer();
-
-// Function to automatically check out the user after 30 seconds
 function autoCheckOut() {
     if (checkedIn) {
         checkedIn = false;
@@ -261,23 +255,10 @@ function autoCheckOut() {
         // Remove check-in status and timestamp cookies
         Cookies.remove('checkInStatus');
         Cookies.remove('checkInTimestamp');
-
+        
         // Notify the server about the check-out
         socket.emit('checkOut');
-
-        // Decrement the total number of people at the gym
-        decrementTotalPeople();
-
-        // Additional logic, if needed
     }
-}
-
-function decrementTotalPeople() {
-    // Call a function or send a request to your server to decrement the total count
-    // For example, you can emit an event to the server
-    socket.emit('decrementTotalPeople');
-    // Update the count on the client side immediately
-    updateCount(parseInt(peopleAtGymElement.textContent) - 1);
 }
 
 // Event listener for the Check-In button
@@ -316,6 +297,10 @@ toggleCheckInButton.addEventListener("click", () => {
         }
     }
 });
+
+socket.on('initCount', (count) => {
+        updateCount(count);
+    });
 
   socket.on('updateCount', (count) => {
         updateCount(count);
