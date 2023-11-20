@@ -165,6 +165,7 @@ function resumeTimer() {
         resumeTimer(); // Resume the timer if applicable
     }
 
+
     function initializeCheckIn() {
     const { status, timestamp } = getCheckInStatusFromCookie();
     if (status === "checkedIn") {
@@ -196,9 +197,6 @@ function resumeTimer() {
     // Event listener for when the server responds with the user's check-in status
     socket.on('responseCheckInStatus', (checkInStatus) => {
         if (checkInStatus === "checkedIn") {
-            checkedIn = true;
-            toggleCheckInButton.classList.add("hidden"); // Hide the button
-            updateStatus("Checked In");
             initializeCheckIn(); // Initialize check-in status and timer if applicable
         }
     });
@@ -228,12 +226,11 @@ let checkInButtonVisible = true; // Track the visibility of the button
 // Function to toggle the button's visibility
 function toggleButtonVisibility() {
     const button = document.getElementById("toggleCheckInButton");
-    if (checkInButtonVisible) {
+    if (checkedIn) {
         button.style.display = "none"; // Hide the button
     } else {
         button.style.display = "block"; // Show the button
     }
-    checkInButtonVisible = !checkInButtonVisible; // Toggle the visibility flag
 }
 
 // Function to store check-in status and timestamp in cookies
