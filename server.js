@@ -29,8 +29,9 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
+const CLIENT_TIMEOUT = 30000; // Default timeout value (30 seconds)
+
 let totalCheckIns = 60;
-let lastCheckInTime = 0;
 
 const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
@@ -43,18 +44,29 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath);
 });
 
-function updatePeopleCount() {
+// Function to check for inactive users and perform auto check-out
+function checkForInactiveUsers() {
     const currentTime = Date.now();
-    const currentTimeInET = new Date(currentTime - 5 * 60 * 60 * 1000);
-    const resetTimeInET = new Date(currentTimeInET);
-    resetTimeInET.setHours(20, 0, 0, 0);
 
-    if (currentTimeInET >= resetTimeInET) {
-        totalCheckIns = 0;
-    }
+    checkedInUsers.forEach((expirationTime, socketId) => {
+        const remainingTime = expirationTime - currentTime;
 
-    lastCheckInTime = currentTime;
+        if (remainingTime <= 0) {
+            // User's timer has expired, perform auto check-out
+            checkedInUsers.delete(socketId);
+            totalCheckIns--;
+            io.emit('updateCount', totalCheckIns);
+
+            // Notify the client about the auto check-out
+            io.to(socketId).emit('checkedOutAutomatically');
+
+            console.log(`User with socket ID ${socketId} has been checked out automatically.`);
+        }
+    });
 }
+
+// Periodically check for inactive users
+setInterval(checkForInactiveUsers, 1000); // Check every second
 
 io.on('connection', async (socket) => {
     try {
@@ -76,8 +88,8 @@ io.on('connection', async (socket) => {
                         const lastCheckInTime = lastCheckInTimes.get(socket.id);
                         const timeSinceLastCheckIn = currentTime - lastCheckInTime;
 
-                        if (timeSinceLastCheckIn < 30000) {
-                            socket.emit('checkInCooldown', 30000 - timeSinceLastCheckIn);
+                        if (timeSinceLastCheckIn < CLIENT_TIMEOUT) {
+                            socket.emit('checkInCooldown', CLIENT_TIMEOUT - timeSinceLastCheckIn);
                             return;
                         }
                     }
@@ -87,11 +99,12 @@ io.on('connection', async (socket) => {
                         const distance = getDistance(userLocation, targetLocation);
 
                         if (distance <= 10000) {
-                            checkedInUsers.set(socket.id, true);
+                            const expirationTime = currentTime + CLIENT_TIMEOUT;
+                            checkedInUsers.set(socket.id, expirationTime);
                             totalCheckIns++;
                             io.emit('updateCount', totalCheckIns);
 
-                            lastCheckInTimes.set(socket.id, Date.now());
+                            lastCheckInTimes.set(socket.id, currentTime);
 
                             const db = client.db('CampusHoops');
                             const collection = db.collection('Data');
