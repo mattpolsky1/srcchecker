@@ -130,6 +130,7 @@ io.on('connection', async (socket) => {
                 io.emit('updateCount', totalCheckIns);
             } else {
                 // If the user has not checked in before (maybe due to page refresh), decrement the count anyway
+                checkedInUsers.delete(socketId)
                 totalCheckIns--;
                 io.emit('updateCount', totalCheckIns);
             }
