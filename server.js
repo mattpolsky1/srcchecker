@@ -45,14 +45,15 @@ app.get('/', (req, res) => {
 
 function updatePeopleCount() {
     const currentTime = Date.now();
-    if (currentTime - lastCheckInTime >= 10 * 1000) {
-        if (checkedIn) {
-            checkedIn = false;
-            localStorage.removeItem(localStorageKey);
-            totalCheckIns--;
-            io.emit('updateCount', totalCheckIns);
-        }
+    const currentTimeInET = new Date(currentTime - 5 * 60 * 60 * 1000);
+    const resetTimeInET = new Date(currentTimeInET);
+    resetTimeInET.setHours(20, 0, 0, 0);
+
+    if (currentTimeInET >= resetTimeInET) {
+        totalCheckIns = 0;
     }
+
+    lastCheckInTime = currentTime;
 }
 
 io.on('connection', async (socket) => {
@@ -62,7 +63,37 @@ io.on('connection', async (socket) => {
         if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
         }
-
+        socket.on('disconnect', () => {
+            const socketId = socket.id;
+        
+            if (checkedInUsers.has(socketId)) {
+                const currentTime = Date.now();
+                const lastCheckInTime = lastCheckInTimes.get(socketId);
+                const timeSinceLastCheckIn = currentTime - lastCheckInTime;
+        
+                if (timeSinceLastCheckIn < 30000) {
+                    // Calculate the remaining time on the timer
+                    const remainingTime = 30000 - timeSinceLastCheckIn;
+        
+                    // Emit an event to notify the client about the automatic check-out
+                    socket.emit('checkedOutAutomatically', remainingTime);
+        
+                    // Set a timer to decrease the count after the remaining time
+                    setTimeout(() => {
+                        // If the user has checked in before, remove them and decrement the count
+                        if (checkedInUsers.has(socketId)) {
+                            checkedInUsers.delete(socketId);
+                            totalCheckIns--;
+                            io.emit('updateCount', totalCheckIns);
+                        }
+                        
+                        // Disconnect the socket after the remaining time
+                        socket.disconnect(true);
+                    }, remainingTime);
+                }
+            }
+        });
+        
         socket.on('checkIn', async (userLocation) => {
             try {
                 updatePeopleCount();
@@ -228,4 +259,3 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
