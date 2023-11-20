@@ -78,7 +78,7 @@ io.on('connection', async (socket) => {
 
         socket.on('checkIn', async (userLocation) => {
             try {
-                updatePeopleCount();
+                updateCount();
 
                 if (checkedInUsers.has(socket.id)) {
                     socket.emit('alreadyCheckedIn');
