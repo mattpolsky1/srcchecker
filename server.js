@@ -118,24 +118,7 @@ io.on('connection', async (socket) => {
             } catch (error) {
                 console.error('Error handling check-in:', error);
             }
-            socket.on('requestCheckInStatus', () => {
-                // Assuming you have a function to determine the check-in status
-                const checkInStatus = determineCheckInStatus(socket.id);
-    
-                // Emit the check-in status back to the client
-                socket.emit('responseCheckInStatus', checkInStatus);
-            });
         });
-
-        function determineCheckInStatus(socketId) {
-            // Check if the user is in the checkedInUsers map
-            if (checkedInUsers.has(socketId)) {
-                return "checkedIn";
-            } else {
-                return "checkedOut";
-            }
-        }
-        
 
         socket.on('checkOut', () => {
             const socketId = socket.id;
@@ -250,4 +233,5 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
