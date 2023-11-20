@@ -126,6 +126,8 @@ io.on('connection', async (socket) => {
                 totalCheckIns--;
                 io.emit('updateCount', totalCheckIns);
             }
+            totalCheckIns--;
+            io.emit('updateCount', totalCheckIns)
         });
 
         socket.on('requestInitialCount', () => {
