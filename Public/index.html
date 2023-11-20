@@ -168,22 +168,30 @@ function resumeTimer() {
 
     function initializeCheckIn() {
     const { status, timestamp } = getCheckInStatusFromCookie();
+
+    // Check if the user has previously checked in
     if (status === "checkedIn") {
         checkedIn = true;
         updateStatus("Checked In");
         toggleButtonVisibility(); // Hide the button
+
         const currentTime = Date.now();
         const timeElapsed = currentTime - parseInt(timestamp, 10);
         const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
+
         if (remainingTime > 0) {
             // Set a timer to automatically check out after remaining time
             setTimeout(autoCheckOut, remainingTime);
         } else {
             // Timer has expired, check the user out
-            localStorage.removeItem('checkInTimestamp');
             checkedIn = false;
             updateStatus("Checked Out");
             toggleButtonVisibility(); // Show the button
+
+            // Remove check-in status and timestamp cookies
+            Cookies.remove('checkInStatus');
+            Cookies.remove('checkInTimestamp');
+
             // Notify the server about the check-out
             socket.emit('checkOut');
         }
