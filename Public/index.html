@@ -264,7 +264,20 @@ function autoCheckOut() {
 
         // Notify the server about the check-out
         socket.emit('checkOut');
+
+        // Decrement the total number of people at the gym
+        decrementTotalPeople();
+
+        // Additional logic, if needed
     }
+}
+
+function decrementTotalPeople() {
+    // Call a function or send a request to your server to decrement the total count
+    // For example, you can emit an event to the server
+    socket.emit('decrementTotalPeople');
+    // Update the count on the client side immediately
+    updateCount(parseInt(peopleAtGymElement.textContent) - 1);
 }
 
 // Event listener for the Check-In button
