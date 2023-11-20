@@ -121,13 +121,18 @@ io.on('connection', async (socket) => {
         });
 
         socket.on('checkOut', () => {
-            if (checkedInUsers.has(socket.id)) {
-                checkedInUsers.delete(socket.id);
+            const socketId = socket.id;
+        
+            // If the user has checked in before, remove them and decrement the count
+            if (checkedInUsers.has(socketId)) {
+                checkedInUsers.delete(socketId);
+                totalCheckIns--;
+                io.emit('updateCount', totalCheckIns);
+            } else {
+                // If the user has not checked in before (maybe due to page refresh), decrement the count anyway
                 totalCheckIns--;
                 io.emit('updateCount', totalCheckIns);
             }
-            totalCheckIns--;
-            io.emit('updateCount', totalCheckIns)
         });
 
         socket.on('requestInitialCount', () => {
