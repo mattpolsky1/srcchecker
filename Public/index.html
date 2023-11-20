@@ -148,6 +148,50 @@ function checkAndResumeTimer() {
     }
 }
 
+function handleCheckIn() {
+    if (!checkedIn) {
+        getUserLocation()
+            .then((position) => {
+                const userLatitude = position.coords.latitude;
+                const userLongitude = position.coords.longitude;
+                const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
+                const distance = getDistance({ latitude: userLatitude, longitude: userLongitude }, targetLocation);
+
+                if (distance <= 10000) { // Within 10 miles
+                    handleSuccessfulCheckIn();
+                    socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
+                } else {
+                    alert("You are not within 10 miles of the specified location. Check-in not allowed.");
+                }
+            })
+            .catch((error) => {
+                console.error('Error getting user location:', error);
+                alert('Error getting your location. Please check your web settings and try again.');
+            });
+    }
+}
+
+function handleSuccessfulCheckIn() {
+    const currentTime = Date.now();
+    checkedIn = true;
+    localStorage.setItem(localStorageKey, "checkedIn");
+    updateStatus("Checked In");
+    toggleButtonVisibility(); // Hide the button immediately
+
+    // Store check-in status and timestamp in cookies
+    setCheckInStatusInCookie("checkedIn", currentTime);
+
+    // Set a timer to automatically check out after 30 seconds
+    setTimeout(autoCheckOut, 30000); // 30 seconds
+}
+
+function getUserLocation() {
+    return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+    });
+}
+
+
 // Function to resume the timer
 function resumeTimer() {
     const { timestamp } = getCheckInStatusFromCookie();
@@ -204,7 +248,24 @@ socket.on('hourlyCheckIns', (data) => {
         // Set a timer to automatically check out after 30 seconds
         setTimeout(autoCheckOut, 30000); // 30 seconds
     }
-
+    updateCount();
+    function resumeTimer() {
+    const { timestamp } = getCheckInStatusFromCookie();
+    if (timestamp) {
+        const currentTime = Date.now();
+        const timeElapsed = currentTime - parseInt(timestamp, 10);
+        const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
+        if (remainingTime > 0) {
+            setTimeout(autoCheckOut, remainingTime);
+        } else {
+            // Timer has expired, check the user out
+            setCheckInStatusInCookie("checkedOut", null); // Clear the cookie
+            checkedIn = false;
+            updateStatus("Checked Out");
+            toggleButtonVisibility(); // Show the button
+        }
+    }
+}
 let checkInButtonVisible = true; // Track the visibility of the button
 
 // Function to toggle the button's visibility
@@ -231,7 +292,7 @@ function autoCheckOut() {
 }
 
 // Event listener for the Check-In button
-toggleCheckInButton.addEventListener("click", () => {
+toggleCheckInButton.addEventListener("click", handleCheckIn => {
     if (!checkedIn) {
         const currentTime = Date.now();
         if (navigator.geolocation) {
