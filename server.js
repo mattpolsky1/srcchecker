@@ -45,15 +45,14 @@ app.get('/', (req, res) => {
 
 function updatePeopleCount() {
     const currentTime = Date.now();
-    const currentTimeInET = new Date(currentTime - 5 * 60 * 60 * 1000);
-    const resetTimeInET = new Date(currentTimeInET);
-    resetTimeInET.setHours(20, 0, 0, 0);
-
-    if (currentTimeInET >= resetTimeInET) {
-        totalCheckIns = 0;
+    if (currentTime - lastCheckInTime >= 10 * 1000) {
+        if (checkedIn) {
+            checkedIn = false;
+            localStorage.removeItem(localStorageKey);
+            totalCheckIns--;
+            io.emit('updateCount', totalCheckIns);
+        }
     }
-
-    lastCheckInTime = currentTime;
 }
 
 io.on('connection', async (socket) => {
