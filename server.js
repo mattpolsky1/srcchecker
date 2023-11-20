@@ -4,32 +4,30 @@ const socketIO = require('socket.io');
 const path = require('path');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
-const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.ev0u1hj.mongodb.net/?retryWrites=true&w=majority";
+const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.ev0u1hj.mongodb.net/CampusHoops?retryWrites=true&w=majority";
+
 const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
 });
 
 async function run() {
-  try {
-    console.log("Trying to connect to MongoDB...");
-    await client.connect();
-    await client.db("CampusHoops").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } catch (error) {
-    console.error('Error connecting to MongoDB:', error);
-    throw error;
-  }
+    try {
+        await client.connect();
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } finally {
+        // Ensure that the client will close when you finish/error
+        // await client.close();
+    }
 }
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
-
-run().catch(console.error);
 
 let totalCheckIns = 60;
 let lastCheckInTime = 0;
@@ -41,188 +39,188 @@ const publicPath = path.join(__dirname, 'Public');
 app.use(express.static(publicPath));
 
 app.get('/', (req, res) => {
-  const indexPath = path.join(publicPath, 'index.html');
-  res.sendFile(indexPath);
+    const indexPath = path.join(publicPath, 'index.html');
+    res.sendFile(indexPath);
 });
 
 function updatePeopleCount() {
-  const currentTime = Date.now();
-  const currentTimeInET = new Date(currentTime - 5 * 60 * 60 * 1000);
-  const resetTimeInET = new Date(currentTimeInET);
-  resetTimeInET.setHours(20, 0, 0, 0);
+    const currentTime = Date.now();
+    const currentTimeInET = new Date(currentTime - 5 * 60 * 60 * 1000);
+    const resetTimeInET = new Date(currentTimeInET);
+    resetTimeInET.setHours(20, 0, 0, 0);
 
-  if (currentTimeInET >= resetTimeInET) {
-    totalCheckIns = 0;
-  }
+    if (currentTimeInET >= resetTimeInET) {
+        totalCheckIns = 0;
+    }
 
-  lastCheckInTime = currentTime;
+    lastCheckInTime = currentTime;
 }
 
 io.on('connection', async (socket) => {
-  try {
-    console.log(`A user connected with socket id: ${socket.id}`);
-    await logDailyCheckIns();
-    await logHourlyCheckIns();
-    socket.emit('updateCount', totalCheckIns);
-
-    if (checkedInUsers.has(socket.id)) {
-      socket.emit('alreadyCheckedIn');
-    }
-
-    socket.on('checkIn', async (userLocation) => {
-      try {
-        console.log(`Received checkIn event from socket id: ${socket.id}`);
-        updatePeopleCount();
+    try {
+        socket.emit('updateCount', totalCheckIns);
 
         if (checkedInUsers.has(socket.id)) {
-          socket.emit('alreadyCheckedIn');
-        } else {
-          if (lastCheckInTimes.has(socket.id)) {
-            const currentTime = Date.now();
-            const lastCheckInTime = lastCheckInTimes.get(socket.id);
-            const timeSinceLastCheckIn = currentTime - lastCheckInTime;
-
-            if (timeSinceLastCheckIn < 30000) {
-              socket.emit('checkInCooldown', 30000 - timeSinceLastCheckIn);
-              return;
-            }
-          }
-
-          if (userLocation && userLocation.latitude && userLocation.longitude) {
-            const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
-            const distance = getDistance(userLocation, targetLocation);
-
-            if (distance <= 10000) {
-              checkedInUsers.set(socket.id, true);
-              totalCheckIns++;
-              io.emit('updateCount', totalCheckIns);
-
-              lastCheckInTimes.set(socket.id, Date.now());
-
-              const db = client.db('CampusHoops');
-              const collection = db.collection('Data');
-
-              const checkInData = {
-                socketId: socket.id,
-                checkInTime: new Date(),
-                userLocation: userLocation
-              };
-
-              try {
-                await collection.insertOne(checkInData);
-                console.log('Check-in data inserted into MongoDB');
-              } catch (error) {
-                console.error('Error inserting check-in data into MongoDB:', error);
-              }
-            } else {
-              socket.emit('checkInNotAllowed');
-            }
-          } else {
-            socket.emit('checkInNotAllowed');
-          }
+            socket.emit('alreadyCheckedIn');
         }
-      } catch (error) {
-        console.error('Error handling check-in:', error);
-      }
-    });
 
-    socket.on('checkOut', () => {
-      console.log(`Received checkOut event from socket id: ${socket.id}`);
-      if (checkedInUsers.has(socket.id)) {
-        checkedInUsers.delete(socket.id);
-        totalCheckIns--;
-        io.emit('updateCount', totalCheckIns);
-      }
-    });
+        socket.on('checkIn', async (userLocation) => {
+            try {
+                updatePeopleCount();
 
-    async function logDailyCheckIns() {
-      try {
-        const db = client.db('CampusHoops');
-        const collection = db.collection('Data');
+                if (checkedInUsers.has(socket.id)) {
+                    socket.emit('alreadyCheckedIn');
+                } else {
+                    if (lastCheckInTimes.has(socket.id)) {
+                        const currentTime = Date.now();
+                        const lastCheckInTime = lastCheckInTimes.get(socket.id);
+                        const timeSinceLastCheckIn = currentTime - lastCheckInTime;
 
-        const currentDate = getCurrentDate();
+                        if (timeSinceLastCheckIn < 30000) {
+                            socket.emit('checkInCooldown', 30000 - timeSinceLastCheckIn);
+                            return;
+                        }
+                    }
 
-        const dailyCheckIns = await collection.find({
-          checkInTime: {
-            $gte: currentDate,
-            $lt: new Date(currentDate.getTime() + 24 * 60 * 60 * 1000)
-          }
-        }).toArray();
+                    if (userLocation && userLocation.latitude && userLocation.longitude) {
+                        const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
+                        const distance = getDistance(userLocation, targetLocation);
 
-        dailyCheckInsCount = dailyCheckIns.length;
+                        if (distance <= 10000) {
+                            checkedInUsers.set(socket.id, true);
+                            totalCheckIns++;
+                            io.emit('updateCount', totalCheckIns);
 
-        console.log('Number of check-ins today:', dailyCheckInsCount);
-        io.emit('dailyCheckIns', { date: currentDate, count: dailyCheckInsCount });
-      } catch (error) {
-        console.error('Error logging daily check-ins:', error);
-      }
-    }
+                            lastCheckInTimes.set(socket.id, Date.now());
 
-    async function logHourlyCheckIns() {
-      try {
-        const db = client.db('CampusHoops');
-        const collection = db.collection('Data');
+                            const db = client.db('CampusHoops');
+                            const collection = db.collection('Data');
 
-        const currentHour = getCurrentHour();
+                            const checkInData = {
+                                socketId: socket.id,
+                                checkInTime: new Date(),
+                                userLocation: userLocation
+                            };
 
-        if (currentHour >= 8 && currentHour <= 20) {
-          const hourlyCheckIns = await collection.find({
-            checkInTime: {
-              $gte: new Date().setHours(8, 0, 0),
-              $lt: new Date().setHours(21, 0, 0)
+                            try {
+                                await collection.insertOne(checkInData);
+                                console.log('Check-in data inserted into MongoDB');
+                            } catch (error) {
+                                console.error('Error inserting check-in data into MongoDB:', error);
+                            }
+                        } else {
+                            socket.emit('checkInNotAllowed');
+                        }
+                    } else {
+                        socket.emit('checkInNotAllowed');
+                    }
+                }
+            } catch (error) {
+                console.error('Error handling check-in:', error);
             }
-          }).toArray();
+        });
 
-          hourlyCheckInsCount = hourlyCheckIns.length;
-          console.log('Hourly check-ins data:', hourlyCheckIns);
-          io.emit('hourlyCheckIns', { hour: currentHour, count: hourlyCheckInsCount });
+        socket.on('checkOut', () => {
+            if (checkedInUsers.has(socket.id)) {
+                checkedInUsers.delete(socket.id);
+                totalCheckIns--;
+                io.emit('updateCount', totalCheckIns);
+            }
+        });
+
+        // Function to log daily check-ins
+        async function logDailyCheckIns() {
+            try {
+                const db = client.db('CampusHoops');
+                const collection = db.collection('Data');
+
+                const currentDate = getCurrentDate();
+
+                const dailyCheckIns = await collection.find({
+                    checkInTime: {
+                        $gte: currentDate,
+                        $lt: new Date(currentDate.getTime() + 24 * 60 * 60 * 1000)
+                    }
+                }).toArray();
+
+                console.log('Number of check-ins today:', dailyCheckIns.length);
+                io.emit('dailyCheckIns', { date: currentDate, count: dailyCheckIns.length });
+            } catch (error) {
+                console.error('Error logging daily check-ins:', error);
+            }
         }
-      } catch (error) {
-        console.error('Error logging hourly check-ins:', error);
-      }
-    }
 
-  } catch (error) {
-    console.error('Error in socket connection:', error);
-  }
+        // Function to log hourly check-ins (from 8:00 AM to 8:00 PM)
+        async function logHourlyCheckIns() {
+            try {
+                const db = client.db('CampusHoops');
+                const collection = db.collection('Data');
+
+                const currentHour = getCurrentHour();
+
+                if (currentHour >= 8 && currentHour <= 20) {
+                    const hourlyCheckIns = await collection.find({
+                        checkInTime: {
+                            $gte: new Date().setHours(8, 0, 0),
+                            $lt: new Date().setHours(21, 0, 0)
+                        }
+                    }).toArray();
+
+                    console.log('Number of check-ins this hour:', hourlyCheckIns.length);
+                    io.emit('hourlyCheckIns', { hour: currentHour, count: hourlyCheckIns.length });
+                }
+            } catch (error) {
+                console.error('Error logging hourly check-ins:', error);
+            }
+        }
+
+        // Call the function to log daily check-ins
+        logDailyCheckIns();
+
+        // Call the function to log hourly check-ins
+        logHourlyCheckIns();
+    } catch (error) {
+        console.error('Error in socket connection:', error);
+    }
 });
 
 function getCurrentDate() {
-  const now = new Date();
-  const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return currentDate;
+    const now = new Date();
+    const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return currentDate;
 }
 
 function getCurrentHour() {
-  return new Date().getHours();
+    return new Date().getHours();
 }
 
 function getDistance(location1, location2) {
-  const R = 6371;
-  const lat1 = location1.latitude;
-  const lon1 = location1.longitude;
-  const lat2 = location2.latitude;
-  const lon2 = location2.longitude;
+    const R = 6371;
+    const lat1 = location1.latitude;
+    const lon1 = location1.longitude;
+    const lat2 = location2.latitude;
+    const lon2 = location2.longitude;
 
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
 
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
 
-  return distance * 1000;
+    return distance * 1000;
 }
 
 function toRadians(degrees) {
-  return degrees * (Math.PI / 180);
+    return degrees * (Math.PI / 180);
 }
 
-const PORT = process.env.PORT || 1637;
+const PORT = process.env.PORT || 8080;
 
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
+
