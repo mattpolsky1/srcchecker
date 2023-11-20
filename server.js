@@ -130,13 +130,9 @@ io.on('connection', async (socket) => {
                 io.emit('updateCount', totalCheckIns);
             } else {
                 // If the user has not checked in before (maybe due to page refresh), decrement the count anyway
-                checkedInUsers.delete(socketId)
                 totalCheckIns--;
                 io.emit('updateCount', totalCheckIns);
             }
-        
-            // Remove the 'checkedOutAutomatically' flag from local storage
-            socket.emit('removeCheckedOutAutomaticallyFlag');
         });
 
         socket.on('requestInitialCount', () => {
@@ -233,3 +229,4 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
