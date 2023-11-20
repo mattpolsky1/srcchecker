@@ -168,10 +168,9 @@ function resumeTimer() {
 
     function initializeCheckIn() {
     const { status, timestamp } = getCheckInStatusFromCookie();
-    const checkedOutAutomatically = localStorage.getItem('checkedOutAutomatically');
 
-    // Check if the user has previously checked in and not auto-checked out
-    if (status === "checkedIn" && !checkedOutAutomatically) {
+    // Check if the user has previously checked in
+    if (status === "checkedIn") {
         checkedIn = true;
         updateStatus("Checked In");
         toggleButtonVisibility(); // Hide the button
@@ -184,23 +183,27 @@ function resumeTimer() {
             // Set a timer to automatically check out after remaining time
             setTimeout(autoCheckOut, remainingTime);
         } else {
-            // Timer has expired, set a timer for automatic check-out
-            setTimeout(autoCheckOut, remainingTime);
+            // Timer has expired, check if the user has been auto-checked out
+            if (localStorage.getItem('checkedOutAutomatically')) {
+                // User has been auto-checked out, perform necessary actions
+                checkedIn = false;
+                updateStatus("Checked Out");
+                toggleButtonVisibility(); // Show the button
+
+                // Remove check-in status and timestamp cookies
+                Cookies.remove('checkInStatus');
+                Cookies.remove('checkInTimestamp');
+
+                // Notify the server about the check-out
+                socket.emit('checkOut');
+            } else {
+                // User has not been auto-checked out, set a timer for automatic check-out
+                setTimeout(autoCheckOut, remainingTime);
+            }
         }
-    } else if (checkedOutAutomatically) {
-        // User has been auto-checked out, perform necessary actions
-        checkedIn = false;
-        updateStatus("Checked Out");
-        toggleButtonVisibility(); // Show the button
-
-        // Remove check-in status and timestamp cookies
-        Cookies.remove('checkInStatus');
-        Cookies.remove('checkInTimestamp');
-
-        // Notify the server about the check-out
-        socket.emit('checkOut');
     }
 }
+
 
     // Event listener for when the page is fully loaded
     document.addEventListener("DOMContentLoaded", () => {
