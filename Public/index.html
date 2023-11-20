@@ -218,9 +218,7 @@ function resumeTimer() {
 
     // Event listener for when the server responds with the user's check-in status
     socket.on('responseCheckInStatus', (checkInStatus) => {
-        if (checkInStatus === "checkedIn") {
             initializeCheckIn(); // Initialize check-in status and timer if applicable
-        }
     });
 });
 
