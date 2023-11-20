@@ -33,8 +33,7 @@ const CLIENT_TIMEOUT = 30000; // Default timeout value (30 seconds)
 
 let totalCheckIns = 60;
 
-const checkedInUsers = new Map();
-const lastCheckInTimes = new Map();
+
 
 const publicPath = path.join(__dirname, 'Public');
 app.use(express.static(publicPath));
@@ -55,7 +54,7 @@ function checkForInactiveUsers() {
             // User's timer has expired, perform auto check-out
             checkedInUsers.delete(socketId);
             totalCheckIns--;
-            io.emit('updateCount', totalCheckIns);
+            io.emit('initCount', totalCheckIns);
 
             // Notify the client about the auto check-out
             io.to(socketId).emit('checkedOutAutomatically');
@@ -67,7 +66,8 @@ function checkForInactiveUsers() {
 
 // Periodically check for inactive users
 setInterval(checkForInactiveUsers, 1000); // Check every second
-
+const checkedInUsers = new Map();
+const lastCheckInTimes = new Map();
 io.on('connection', async (socket) => {
     try {
         socket.emit('initCount', totalCheckIns);
@@ -246,5 +246,3 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
-
