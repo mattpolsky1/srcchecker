@@ -168,7 +168,7 @@ function resumeTimer() {
 
     function initializeCheckIn() {
     const { status, timestamp } = getCheckInStatusFromCookie();
-    if (status === "checkedIn" && remainingTime > 0) {
+    if (status === "checkedIn" && timestamp) {
         checkedIn = true;
         updateStatus("Checked In");
         toggleButtonVisibility(); // Hide the button
