@@ -32,7 +32,7 @@ const io = socketIO(server);
 let totalCheckIns = 60;
 let lastCheckInTime = 0;
 
-const checkedInUsers = new Map();
+const connectedUsers = new Map();
 const lastCheckInTimes = new Map();
 
 const publicPath = path.join(__dirname, 'Public');
@@ -60,45 +60,46 @@ io.on('connection', async (socket) => {
     try {
         socket.emit('initCount', totalCheckIns);
 
-        if (checkedInUsers.has(socket.id)) {
+        if (connectedUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
         }
+
         socket.on('disconnect', () => {
             const socketId = socket.id;
-        
-            if (checkedInUsers.has(socketId)) {
+
+            if (connectedUsers.has(socketId)) {
                 const currentTime = Date.now();
                 const lastCheckInTime = lastCheckInTimes.get(socketId);
                 const timeSinceLastCheckIn = currentTime - lastCheckInTime;
-        
+
                 if (timeSinceLastCheckIn < 30000) {
                     // Calculate the remaining time on the timer
                     const remainingTime = 30000 - timeSinceLastCheckIn;
-        
+
                     // Emit an event to notify the client about the automatic check-out
                     socket.emit('checkedOutAutomatically', remainingTime);
-        
+
                     // Set a timer to decrease the count after the remaining time
                     setTimeout(() => {
                         // If the user has checked in before, remove them and decrement the count
-                        if (checkedInUsers.has(socketId)) {
-                            checkedInUsers.delete(socketId);
+                        if (connectedUsers.has(socketId)) {
+                            connectedUsers.delete(socketId);
                             totalCheckIns--;
                             io.emit('updateCount', totalCheckIns);
                         }
-                        
+
                         // Disconnect the socket after the remaining time
                         socket.disconnect(true);
                     }, remainingTime);
                 }
             }
         });
-        
+
         socket.on('checkIn', async (userLocation) => {
             try {
                 updatePeopleCount();
 
-                if (checkedInUsers.has(socket.id)) {
+                if (connectedUsers.has(socket.id)) {
                     socket.emit('alreadyCheckedIn');
                 } else {
                     if (lastCheckInTimes.has(socket.id)) {
@@ -117,7 +118,7 @@ io.on('connection', async (socket) => {
                         const distance = getDistance(userLocation, targetLocation);
 
                         if (distance <= 10000) {
-                            checkedInUsers.set(socket.id, true);
+                            connectedUsers.set(socket.id, true);
                             totalCheckIns++;
                             io.emit('updateCount', totalCheckIns);
 
@@ -152,10 +153,10 @@ io.on('connection', async (socket) => {
 
         socket.on('checkOut', () => {
             const socketId = socket.id;
-        
+
             // If the user has checked in before, remove them and decrement the count
-            if (checkedInUsers.has(socketId)) {
-                checkedInUsers.delete(socketId);
+            if (connectedUsers.has(socketId)) {
+                connectedUsers.delete(socketId);
                 totalCheckIns--;
                 io.emit('updateCount', totalCheckIns);
             } else {
