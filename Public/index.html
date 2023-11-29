@@ -168,7 +168,7 @@ function resumeTimer() {
 
     function initializeCheckIn() {
     const { status, timestamp } = getCheckInStatusFromCookie();
-    if (status === "checkedIn") {
+    if (status === "checkedIn" && remainingTime > 0) {
         checkedIn = true;
         updateStatus("Checked In");
         toggleButtonVisibility(); // Hide the button
@@ -187,8 +187,14 @@ function resumeTimer() {
             // Notify the server about the check-out
             socket.emit('checkOut');
         }
+    } else {
+        // If the user is not checked in or the timer has expired, set the status to "Checked Out"
+        checkedIn = false;
+        updateStatus("Checked Out");
+        toggleButtonVisibility(); // Show the button
     }
 }
+
     // Event listener for when the page is fully loaded
     document.addEventListener("DOMContentLoaded", () => {
     // Request the user's check-in status from the server
