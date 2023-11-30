@@ -125,106 +125,80 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    const peopleAtGymElement = document.getElementById("peopleAtGym");
-    const toggleCheckInButton = document.getElementById("toggleCheckInButton");
-    const statusLabel = document.getElementById("statusLabel");
-    const gymStatusLabel = document.getElementById("gymStatusLabel");
+        const peopleAtGymElement = document.getElementById("peopleAtGym");
+        const toggleCheckInButton = document.getElementById("toggleCheckInButton");
+        const statusLabel = document.getElementById("statusLabel");
+        const gymStatusLabel = document.getElementById("gymStatusLabel");
 
-    const socket = io();
+        const socket = io();
 
-    let checkedIn = false;
-const localStorageKey = "checkInStatus";
+        let checkedIn = false;
+        const cookieKey = "checkInStatus";
 
-// Check if the user has previously checked in
-function resumeTimer() {
-        const checkInTimestamp = localStorage.getItem('checkInTimestamp');
-        if (checkInTimestamp) {
-            const currentTime = Date.now();
-            const timeElapsed = currentTime - parseInt(checkInTimestamp, 10);
-            const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
-            if (remainingTime > 0) {
+        function resumeTimer() {
+            const checkInTimestamp = Cookies.get('checkInTimestamp');
+            if (checkInTimestamp) {
+                const currentTime = Date.now();
+                const timeElapsed = currentTime - parseInt(checkInTimestamp, 10);
+                const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
+                if (remainingTime > 0) {
+                    checkedIn = true;
+                    setTimeout(autoCheckOut, remainingTime);
+                    toggleButtonVisibility(); // Hide the button
+                } else {
+                    Cookies.remove('checkInTimestamp');
+                    checkedIn = false;
+                    updateStatus("Checked Out");
+                    toggleButtonVisibility(); // Show the button
+                }
+            }
+        }
+
+        const previousCheckInStatus = Cookies.get(cookieKey);
+        if (previousCheckInStatus === "checkedIn") {
+            checkedIn = true;
+            toggleCheckInButton.classList.add("hidden"); // Hide the button
+            updateStatus("Checked In");
+            resumeTimer(); // Resume the timer if applicable
+        }
+
+        function initializeCheckIn() {
+            const { status, timestamp } = getCheckInStatusFromCookie();
+
+            if (status === "checkedIn") {
                 checkedIn = true;
-                setTimeout(autoCheckOut, remainingTime);
+                updateStatus("Checked In");
                 toggleButtonVisibility(); // Hide the button
+
+                const currentTime = Date.now();
+                const timeElapsed = currentTime - parseInt(timestamp, 10);
+                const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
+
+                if (remainingTime > 0) {
+                    setTimeout(autoCheckOut, remainingTime);
+                } else {
+                    Cookies.remove('checkInTimestamp');
+                    checkedIn = false;
+                    updateStatus("Checked Out");
+                    toggleButtonVisibility(); // Show the button
+                }
             } else {
-                // Timer has expired, check the user out
-                localStorage.removeItem('checkInTimestamp');
                 checkedIn = false;
                 updateStatus("Checked Out");
                 toggleButtonVisibility(); // Show the button
             }
         }
-    }
 
-    // Check if the user has previously checked in
-    const previousCheckInStatus = localStorage.getItem(localStorageKey);
-    if (previousCheckInStatus === "checkedIn") {
-        checkedIn = true;
-        toggleCheckInButton.classList.add("hidden"); // Hide the button
-        updateStatus("Checked In");
-        resumeTimer(); // Resume the timer if applicable
-    }
+        document.addEventListener("DOMContentLoaded", () => {
+            socket.emit('requestCheckInStatus');
+            socket.on('responseCheckInStatus', (checkInStatus) => {
+                initializeCheckIn(); // Initialize check-in status and timer if applicable
+            });
+        });
 
-
-    function initializeCheckIn() {
-    const { status, timestamp } = getCheckInStatusFromCookie();
-
-    // Check if the user has previously checked in
-    if (status === "checkedIn") {
-        checkedIn = true;
-        updateStatus("Checked In");
-        toggleButtonVisibility(); // Hide the button
-
-        const currentTime = Date.now();
-        const timeElapsed = currentTime - parseInt(timestamp, 10);
-        const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
-
-        if (remainingTime > 0) {
-            // Set a timer to automatically check out after remaining time
-            setTimeout(autoCheckOut, remainingTime);
-        } else {
-            // Timer has expired, check if the user has been auto-checked out
-            if (localStorage.getItem('checkedOutAutomatically')) {
-                // User has been auto-checked out, perform necessary actions
-                checkedIn = false;
-                updateStatus("Checked Out");
-                toggleButtonVisibility(); // Show the button
-
-                // Remove check-in status and timestamp cookies
-                Cookies.remove('checkInStatus');
-                Cookies.remove('checkInTimestamp');
-
-                // Notify the server about the check-out
-                socket.emit('checkOut');
-            } else {
-                // User has not been auto-checked out, set a timer for automatic check-out
-                setTimeout(autoCheckOut, remainingTime);
-            }
-        }
-    } else {
-        // The user is not checked in, ensure the UI reflects the correct status
-        checkedIn = false;
-        updateStatus("Checked Out");
-        toggleButtonVisibility(); // Show the button
-    }
-}
-
-
-
-    // Event listener for when the page is fully loaded
-    document.addEventListener("DOMContentLoaded", () => {
-    // Request the user's check-in status from the server
-    socket.emit('requestCheckInStatus');
-
-    // Event listener for when the server responds with the user's check-in status
-    socket.on('responseCheckInStatus', (checkInStatus) => {
-            initializeCheckIn(); // Initialize check-in status and timer if applicable
-    });
+        socket.on('removeCheckedOutAutomaticallyFlag', () => {
+    Cookies.remove('checkedOutAutomatically');
 });
-
-socket.on('removeCheckedOutAutomaticallyFlag', () => {
-        localStorage.removeItem('checkedOutAutomatically');
-    });
 
     socket.on('dailyCheckIns', (data) => {
     console.log(`Number of check-ins on ${data.date.toDateString()}: ${data.count}`);
@@ -249,44 +223,36 @@ let checkInButtonVisible = true; // Track the visibility of the button
 
 // Function to toggle the button's visibility
 function toggleButtonVisibility() {
-    const button = document.getElementById("toggleCheckInButton");
-    if (checkedIn) {
-        button.style.display = "none"; // Hide the button
-    } else {
-        button.style.display = "block"; // Show the button
-    }
-}
+            const button = document.getElementById("toggleCheckInButton");
+            if (checkedIn) {
+                button.style.display = "none"; // Hide the button
+            } else {
+                button.style.display = "block"; // Show the button
+            }
+        }
 
-// Function to store check-in status and timestamp in cookies
-function setCheckInStatusInCookie(status, timestamp) {
-    Cookies.set('checkInStatus', status);
-    Cookies.set('checkInTimestamp', timestamp);
-}
+        function setCheckInStatusInCookie(status, timestamp) {
+            Cookies.set(cookieKey, status);
+            Cookies.set('checkInTimestamp', timestamp);
+        }
 
-// Function to get check-in status and timestamp from cookies
-function getCheckInStatusFromCookie() {
-    const status = Cookies.get('checkInStatus');
-    const timestamp = Cookies.get('checkInTimestamp');
-    return { status, timestamp };
-}
+        function getCheckInStatusFromCookie() {
+            const status = Cookies.get(cookieKey);
+            const timestamp = Cookies.get('checkInTimestamp');
+            return { status, timestamp };
+        }
 
-// Function to automatically check out the user after 30 seconds
-function autoCheckOut() {
-    if (checkedIn) {
-        checkedIn = false;
-        updateStatus("Checked Out");
-        toggleButtonVisibility(); // Show the button
-        // Remove check-in status and timestamp cookies
-        Cookies.remove('checkInStatus');
-        Cookies.remove('checkInTimestamp');
-        
-        // Notify the server about the check-out
-        socket.emit('checkOut');
-
-        // Set a flag in local storage to indicate automatic checkout
-        localStorage.setItem('checkedOutAutomatically', 'true');
-    }
-}
+        function autoCheckOut() {
+            if (checkedIn) {
+                checkedIn = false;
+                updateStatus("Checked Out");
+                toggleButtonVisibility(); // Show the button
+                Cookies.remove(cookieKey);
+                Cookies.remove('checkInTimestamp');
+                socket.emit('checkOut');
+                Cookies.set('checkedOutAutomatically', 'true');
+            }
+        }
 
 // Event listener for the Check-In button
 toggleCheckInButton.addEventListener("click", () => {
@@ -301,7 +267,7 @@ toggleCheckInButton.addEventListener("click", () => {
 
                 if (distance <= 10000) { // Within 10 miles
                     checkedIn = true;
-                    localStorage.setItem(localStorageKey, "checkedIn");
+                    Cookies.set("checkInStatus", "checkedIn");
                     updateStatus("Checked In");
                     toggleButtonVisibility(); // Hide the button immediately
 
@@ -340,7 +306,7 @@ socket.on('initCount', (count) => {
     socket.on('checkedOutAutomatically', () => {
         alert('You have been checked out automatically after 30 seconds of inactivity.');
         checkedIn = false;
-        localStorage.removeItem(localStorageKey);
+        Cookies.remove("checkInStatus");
         updateStatus("Checked Out");
         toggleCheckInButton.classList.remove("hidden"); // Show the button
     });
