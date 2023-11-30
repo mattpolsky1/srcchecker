@@ -92,6 +92,18 @@ io.on('connection', async (socket) => {
                     }, remainingTime);
                 }
             }
+            socket.on('reconnect', (attemptNumber) => {
+                const socketId = socket.id;
+    
+                if (checkedInUsers.has(socketId)) {
+                    console.log(`User with socket ID ${socketId} reconnected (attempt ${attemptNumber}).`);
+    
+                    // Emit an event to notify the client about the reconnection
+                    socket.emit('reconnectedSuccessfully', { socketId });
+    
+                    // You might want to perform additional reconnection logic here...
+                }
+            });
         });
         
         socket.on('checkIn', async (userLocation) => {

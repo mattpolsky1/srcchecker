@@ -210,7 +210,19 @@ if (previousCheckInStatus === "checkedIn") {
             initializeCheckIn(); // Initialize check-in status and timer if applicable
         }
     });
+    socket.on('reconnectedSuccessfully', ({ socketId }) => {
+        // Reassociate with the previous socket ID
+        if (socketId) {
+            localStorage.setItem('socketId', socketId);
+            console.log('Reconnected successfully with the previous socket ID:', socketId);
+
+            // Resume timer logic if needed
+            resumeTimer();
+        }
+    });
 });
+
+
 
     socket.on('dailyCheckIns', (data) => {
     console.log(`Number of check-ins on ${data.date.toDateString()}: ${data.count}`);
