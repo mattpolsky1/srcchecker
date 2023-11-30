@@ -243,16 +243,16 @@ function toggleButtonVisibility() {
         }
 
         function autoCheckOut() {
-            if (checkedIn) {
-                checkedIn = false;
-                updateStatus("Checked Out");
-                toggleButtonVisibility(); // Show the button
-                Cookies.remove(cookieKey);
-                Cookies.remove('checkInTimestamp');
-                socket.emit('checkOut');
-                Cookies.set('checkedOutAutomatically', 'true');
-            }
-        }
+    if (checkedIn) {
+        checkedIn = false;
+        updateStatus("Checked Out");
+        toggleButtonVisibility(); // Show the button
+        Cookies.remove(cookieKey);
+        Cookies.remove('checkInTimestamp');
+        socket.emit('checkOut');
+        Cookies.set('checkedOutAutomatically', 'true');
+    }
+}
 
 // Event listener for the Check-In button
 toggleCheckInButton.addEventListener("click", () => {
@@ -352,6 +352,13 @@ socket.on('initCount', (count) => {
     function toRadians(degrees) {
         return degrees * (Math.PI / 180);
     }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+function handleBeforeUnload() {
+    if (checkedIn) {
+        autoCheckOut();
+    }
+}
 </script>
 </body>
 </html>
