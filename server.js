@@ -63,37 +63,7 @@ io.on('connection', async (socket) => {
         if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
         }
-        socket.on('disconnect', () => {
-            const socketId = socket.id;
-        
-            if (checkedInUsers.has(socketId)) {
-                const currentTime = Date.now();
-                const lastCheckInTime = lastCheckInTimes.get(socketId);
-                const timeSinceLastCheckIn = currentTime - lastCheckInTime;
-        
-                if (timeSinceLastCheckIn < 30000) {
-                    // Calculate the remaining time on the timer
-                    const remainingTime = 30000 - timeSinceLastCheckIn;
-        
-                    // Emit an event to notify the client about the automatic check-out
-                    socket.emit('checkedOutAutomatically', remainingTime);
-        
-                    // Set a timer to decrease the count after the remaining time
-                    setTimeout(() => {
-                        // If the user has checked in before, remove them and decrement the count
-                        if (checkedInUsers.has(socketId)) {
-                            checkedInUsers.delete(socketId);
-                            totalCheckIns--;
-                            io.emit('updateCount', totalCheckIns);
-                        }
-                        
-                        // Disconnect the socket after the remaining time
-                        socket.disconnect(true);
-                    }, remainingTime);
-                }
-            }
-        });
-        
+
         socket.on('checkIn', async (userLocation) => {
             try {
                 updatePeopleCount();
@@ -160,9 +130,13 @@ io.on('connection', async (socket) => {
                 io.emit('updateCount', totalCheckIns);
             } else {
                 // If the user has not checked in before (maybe due to page refresh), decrement the count anyway
+                checkedInUsers.delete(socketId)
                 totalCheckIns--;
                 io.emit('updateCount', totalCheckIns);
             }
+        
+            // Remove the 'checkedOutAutomatically' flag from local storage
+            socket.emit('removeCheckedOutAutomaticallyFlag');
         });
 
         socket.on('requestInitialCount', () => {
