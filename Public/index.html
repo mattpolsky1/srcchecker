@@ -125,16 +125,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    
-      if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(registration => {
-        console.log('Service Worker registered with scope:', registration.scope);
-      })
-      .catch(error => {
-        console.error('Service Worker registration failed:', error);
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(registration => {
+      console.log('Service Worker registered with scope:', registration.scope);
+
+      // Send initial checkedIn status to the service worker
+      navigator.serviceWorker.controller.postMessage({
+        type: 'start',
+        checkedIn: checkedIn, // Pass the actual checkedIn status here
       });
-  }
+    })
+    .catch(error => {
+      console.error('Service Worker registration failed:', error);
+    });
+}
         const peopleAtGymElement = document.getElementById("peopleAtGym");
         const toggleCheckInButton = document.getElementById("toggleCheckInButton");
         const statusLabel = document.getElementById("statusLabel");
@@ -251,6 +257,16 @@ function toggleButtonVisibility() {
             const timestamp = Cookies.get('checkInTimestamp');
             return { status, timestamp };
         }
+
+        navigator.serviceWorker.addEventListener('message', (event) => {
+  const { type } = event.data;
+  if (type === 'tick') {
+    // Handle the tick event, update the UI if needed
+  } else if (type === 'autoCheckOut') {
+    // Handle the auto-checkout event
+    autoCheckOut();
+  }
+});
 
         function autoCheckOut() {
     if (checkedIn) {
