@@ -150,11 +150,9 @@
                     checkedIn = false;
                     updateStatus("Checked Out");
                     toggleButtonVisibility(); // Show the button
-                    autoCheckOut()
                 }
             }
         }
-        resumeTimer()
 
         const previousCheckInStatus = Cookies.get(cookieKey);
         if (previousCheckInStatus === "checkedIn") {
