@@ -44,6 +44,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/beacon', (req, res) => {
+    console.log('Beacon received!');
     const { checkedIn } = req.body;
     if (checkedIn) {
         // Perform auto-checkout logic here
