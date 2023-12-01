@@ -130,14 +130,14 @@
 let isRefreshing = false;
 
 // Listen for beforeunload event
+// Listen for page unload
 window.addEventListener('beforeunload', (event) => {
-  console.log('Beforeunload event fired!');
-  if (!isRefreshing && checkedIn) {
-    autoCheckOut();
-  }
+    if (!isRefreshing && checkedIn) {
+        navigator.sendBeacon('/beacon', JSON.stringify({ checkedIn }));
+    }
 });
 
-// Listen for page visibility change to detect refresh
+// Listen for page visibility change
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     isRefreshing = true;
