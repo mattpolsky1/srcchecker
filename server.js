@@ -34,7 +34,6 @@ let lastCheckInTime = 0;
 
 const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
-const checkInIntervals = new Map(); // Map to store check-in intervals
 
 const publicPath = path.join(__dirname, 'Public');
 app.use(express.static(publicPath));
@@ -65,7 +64,7 @@ io.on('connection', async (socket) => {
             socket.emit('alreadyCheckedIn');
         }
 
-        socket.on('checkIn', async (userData) => {
+        socket.on('checkIn', async (userLocation) => {
             try {
                 updatePeopleCount();
 
@@ -83,9 +82,9 @@ io.on('connection', async (socket) => {
                         }
                     }
 
-                    if (userData && userData.userLocation && userData.userLocation.latitude && userData.userLocation.longitude) {
+                    if (userLocation && userLocation.latitude && userLocation.longitude) {
                         const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
-                        const distance = getDistance(userData.userLocation, targetLocation);
+                        const distance = getDistance(userLocation, targetLocation);
 
                         if (distance <= 10000) {
                             checkedInUsers.set(socket.id, true);
@@ -100,7 +99,7 @@ io.on('connection', async (socket) => {
                             const checkInData = {
                                 socketId: socket.id,
                                 checkInTime: new Date(),
-                                userLocation: userData.userLocation
+                                userLocation: userLocation
                             };
 
                             try {
@@ -109,15 +108,6 @@ io.on('connection', async (socket) => {
                             } catch (error) {
                                 console.error('Error inserting check-in data into MongoDB:', error);
                             }
-
-                            const remainingTime = userData.remainingTime || 30000; // Default to 30 seconds if not provided
-
-                            // Set an interval to check out the user after the specified remaining time
-                            checkInIntervals.set(socket.id, setInterval(() => {
-                                socket.emit('checkedOutAutomatically');
-                                autoCheckOut(socket.id);
-                            }, remainingTime));
-
                         } else {
                             socket.emit('checkInNotAllowed');
                         }
@@ -132,10 +122,9 @@ io.on('connection', async (socket) => {
 
         socket.on('checkOut', () => {
             const socketId = socket.id;
-
+        
             // If the user has checked in before, remove them and decrement the count
             if (checkedInUsers.has(socketId)) {
-                clearInterval(checkInIntervals.get(socketId)); // Clear the check-in interval
                 checkedInUsers.delete(socketId);
                 totalCheckIns--;
                 io.emit('updateCount', totalCheckIns);
@@ -145,11 +134,10 @@ io.on('connection', async (socket) => {
                 totalCheckIns--;
                 io.emit('updateCount', totalCheckIns);
             }
-
+        
             // Remove the 'checkedOutAutomatically' flag from local storage
             socket.emit('removeCheckedOutAutomaticallyFlag');
         });
-
 
         socket.on('requestInitialCount', () => {
             socket.emit('initCount', totalCheckIns);
