@@ -126,6 +126,25 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 
+
+let isRefreshing = false;
+
+// Listen for beforeunload event
+window.addEventListener('beforeunload', (event) => {
+  if (!isRefreshing && checkedIn) {
+    autoCheckOut();
+  }
+});
+
+// Listen for page visibility change to detect refresh
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    isRefreshing = true;
+  } else {
+    isRefreshing = false;
+  }
+});
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/service-worker.js')
     .then(registration => {
