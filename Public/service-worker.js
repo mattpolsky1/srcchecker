@@ -17,3 +17,30 @@ self.addEventListener('install', event => {
       })
     );
   });
+  
+  self.addEventListener('sync', (event) => {
+    if (event.tag === 'autoCheckOut') {
+      event.waitUntil(autoCheckOut());
+    }
+  });
+  
+  function autoCheckOut() {
+    // Add your auto checkout logic here
+    if (checkedIn) {
+        checkedIn = false;
+        updateStatus("Checked Out");
+        toggleButtonVisibility(); // Show the button
+        Cookies.remove(cookieKey);
+        Cookies.remove('checkInTimestamp');
+        socket.emit('checkOut');
+        Cookies.set('checkedOutAutomatically', 'true');
+    }
+    return new Promise(resolve => {
+      setTimeout(() => {
+        // Perform actions when sync event is triggered
+        console.log('Auto checkout performed');
+        resolve();
+      }, 10000); // 10 seconds
+    });
+  }
+  
