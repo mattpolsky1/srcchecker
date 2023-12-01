@@ -1,4 +1,5 @@
 let checkedIn = false;
+
 self.addEventListener('install', event => {
     event.waitUntil(
       caches.open('your-cache-name').then(cache => {
