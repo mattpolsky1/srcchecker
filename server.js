@@ -43,6 +43,17 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath);
 });
 
+app.post('/beacon', (req, res) => {
+    console.log('Beacon received!');
+    const { checkedIn } = req.body;
+    if (checkedIn) {
+        // Perform auto-checkout logic here
+        console.log('Received beacon. Performing auto-checkout.');
+        autoCheckOut();
+    }
+    res.sendStatus(200);
+});
+
 function updatePeopleCount() {
     const currentTime = Date.now();
     const currentTimeInET = new Date(currentTime - 5 * 60 * 60 * 1000);

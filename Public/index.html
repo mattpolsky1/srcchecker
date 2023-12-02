@@ -352,6 +352,13 @@ socket.on('initCount', (count) => {
     function toRadians(degrees) {
         return degrees * (Math.PI / 180);
     }
+
+    window.addEventListener('unload', (event) => {
+    // Perform necessary actions before unloading
+    if (checkedIn) {
+        navigator.sendBeacon('/beacon', JSON.stringify({ checkedIn }));
+    }
+});
 </script>
 </body>
 </html>
