@@ -13,6 +13,28 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+async function run() {
+    try {
+        await client.connect();
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } finally {
+        // Ensure that the client will close when you finish/error
+        // await client.close();
+    }
+}
+
+const app = express();
+const server = http.createServer(app);
+const io = socketIO(server);
+
+let totalCheckIns = 60;
+let lastCheckInTime = 0;
+
+const checkedInUsers = new Map();
+const lastCheckInTimes = new Map();
+
+const publicPath = path.join(__dirname, 'Public');
 setInterval(() => {
     checkForAutoCheckOut();
 }, 1000);
@@ -40,28 +62,6 @@ function autoCheckOut(socketId) {
     // Additional logic for updating status and performing other tasks
     updateStatusAndOtherTasks(socketId);
 }
-async function run() {
-    try {
-        await client.connect();
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    } finally {
-        // Ensure that the client will close when you finish/error
-        // await client.close();
-    }
-}
-
-const app = express();
-const server = http.createServer(app);
-const io = socketIO(server);
-
-let totalCheckIns = 60;
-let lastCheckInTime = 0;
-
-const checkedInUsers = new Map();
-const lastCheckInTimes = new Map();
-
-const publicPath = path.join(__dirname, 'Public');
 app.use(express.static(publicPath));
 
 app.get('/', (req, res) => {
