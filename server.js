@@ -53,7 +53,6 @@ app.post('/beacon', (req, res) => {
     }
     res.sendStatus(200);
 });
-// Function to automatically check out users who have been checked in for more than 30 seconds
 function autoCheckOutExpiredUsers() {
     const currentTime = Date.now();
     checkedInUsers.forEach((checkInTime, userId) => {
@@ -64,12 +63,21 @@ function autoCheckOutExpiredUsers() {
             totalCheckIns--;
             io.emit('updateCount', totalCheckIns);
             io.to(userId).emit('checkedOutAutomatically'); // Notify the specific user
+
+            // Clear cookies related to check-in status
+            // Specify the cookie details for the user
+            io.to(userId).emit('clearCheckInStatusCookie');
+
+            // Uncomment the following line if you are using it on the client side
+            // io.to(userId).emit('removeCheckedOutAutomaticallyFlag');
         }
     });
 }
 
-// Run autoCheckOutExpiredUsers every 30 seconds
-setInterval(autoCheckOutExpiredUsers, 30000);
+// Add the following event listener to handle clearing cookies on the client side
+socket.on('clearCheckInStatusCookie', () => {
+    Cookies.remove('checkInStatus');
+});
 
 // Run autoCheckOutExpiredUsers every 30 seconds
 setInterval(autoCheckOutExpiredUsers, 30000);
