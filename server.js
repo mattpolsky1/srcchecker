@@ -5,7 +5,7 @@ const path = require('path');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.ev0u1hj.mongodb.net/CampusHoops?retryWrites=true&w=majority";
-const autoCheckOutTimers = new Map();
+
 const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
@@ -53,29 +53,7 @@ app.post('/beacon', (req, res) => {
     }
     res.sendStatus(200);
 });
-function autoCheckOutExpiredUsers() {
-    const currentTime = Date.now();
-    checkedInUsers.forEach((checkInTime, userId) => {
-        const timeSinceCheckIn = currentTime - checkInTime;
-        if (timeSinceCheckIn >= 30000) {
-            // Auto-checkout the user
-            checkedInUsers.delete(userId);
-            totalCheckIns--;
-            io.emit('updateCount', totalCheckIns);
-            io.to(userId).emit('checkedOutAutomatically'); // Notify the specific user
 
-            // Clear cookies related to check-in status
-            // Specify the cookie details for the user
-            io.to(userId).emit('clearCheckInStatusCookie');
-
-            // Uncomment the following line if you are using it on the client side
-            // io.to(userId).emit('removeCheckedOutAutomaticallyFlag');
-        }
-    });
-}
-
-// Run autoCheckOutExpiredUsers every 30 seconds
-setInterval(autoCheckOutExpiredUsers, 30000);
 
 function updatePeopleCount() {
     const currentTime = Date.now();
@@ -97,12 +75,6 @@ io.on('connection', async (socket) => {
         if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
         }
-       
-        // Add the following event listener to handle clearing cookies on the client side
-socket.on('clearCheckInStatusCookie', () => {
-    Cookies.remove('checkInStatus');
-});
-
 
         socket.on('checkIn', async (userLocation) => {
             try {
@@ -162,8 +134,7 @@ socket.on('clearCheckInStatusCookie', () => {
 
         socket.on('checkOut', () => {
             const socketId = socket.id;
-            clearTimeout(autoCheckOutTimers[socket.id]);
-            autoCheckOutTimers[socket.id] = null;
+        
             // If the user has checked in before, remove them and decrement the count
             if (checkedInUsers.has(socketId)) {
                 checkedInUsers.delete(socketId);
@@ -197,7 +168,20 @@ socket.on('clearCheckInStatusCookie', () => {
                         $lt: new Date(currentDate.getTime() + 24 * 60 * 60 * 1000)
                     }
                 }).toArray();
-
+                const currentTime = Date.now();
+                const checkInThreshold = 30 * 1000; // 30 seconds
+        
+                checkedInUsers.forEach((checkInTime, socketId) => {
+                    const timeSinceCheckIn = currentTime - checkInTime;
+        
+                    if (timeSinceCheckIn >= checkInThreshold) {
+                        // Auto-checkout the user
+                        checkedInUsers.delete(socketId);
+                        totalCheckIns--;
+                        io.emit('updateCount', totalCheckIns);
+                        io.to(socketId).emit('checkedOutAutomatically');
+                    }
+                });
                 console.log('Number of check-ins today:', dailyCheckIns.length);
                 io.emit('dailyCheckIns', { date: currentDate, count: dailyCheckIns.length });
             } catch (error) {
@@ -270,6 +254,7 @@ function toRadians(degrees) {
 }
 
 const PORT = process.env.PORT || 8080;
+
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
