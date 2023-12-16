@@ -53,7 +53,26 @@ app.post('/beacon', (req, res) => {
     }
     res.sendStatus(200);
 });
+// Function to automatically check out users who have been checked in for more than 30 seconds
+function autoCheckOutExpiredUsers() {
+    const currentTime = Date.now();
+    checkedInUsers.forEach((checkInTime, userId) => {
+        const timeSinceCheckIn = currentTime - checkInTime;
+        if (timeSinceCheckIn >= 30000) {
+            // Auto-checkout the user
+            checkedInUsers.delete(userId);
+            totalCheckIns--;
+            io.emit('updateCount', totalCheckIns);
+            io.to(userId).emit('checkedOutAutomatically'); // Notify the specific user
+        }
+    });
+}
 
+// Run autoCheckOutExpiredUsers every 30 seconds
+setInterval(autoCheckOutExpiredUsers, 30000);
+
+// Run autoCheckOutExpiredUsers every 30 seconds
+setInterval(autoCheckOutExpiredUsers, 30000);
 
 function updatePeopleCount() {
     const currentTime = Date.now();
@@ -76,22 +95,6 @@ io.on('connection', async (socket) => {
             socket.emit('alreadyCheckedIn');
         }
 
-        // Function to automatically check out users who have been checked in for more than 30 seconds
-        function autoCheckOutExpiredUsers() {
-            const currentTime = Date.now();
-            checkedInUsers.forEach((checkInTime, userId) => {
-                const timeSinceCheckIn = currentTime - checkInTime;
-                if (timeSinceCheckIn >= 30000) {
-                    // Auto-checkout the user
-                    checkedInUsers.delete(userId);
-                    totalCheckIns--;
-                    io.emit('updateCount', totalCheckIns);
-                    socket.broadcast.emit('checkedOutAutomatically');
-                }
-            });
-        }
-        setImmediate(autoCheckOutExpiredUsers);
-
         socket.on('checkIn', async (userLocation) => {
             try {
                 updatePeopleCount();
@@ -109,15 +112,7 @@ io.on('connection', async (socket) => {
                             return;
                         }
                     }
-        clearTimeout(autoCheckOutTimers[socket.id]);
-        autoCheckOutTimers[socket.id] = null;
-        autoCheckOutTimers[socket.id] = setTimeout(() => {
-            // Auto-checkout the user after 30 seconds
-            checkedInUsers.delete(socket.id);
-            totalCheckIns--;
-            io.emit('updateCount', totalCheckIns);
-            socket.broadcast.emit('checkedOutAutomatically');
-        }, 30000);
+
                     if (userLocation && userLocation.latitude && userLocation.longitude) {
                         const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                         const distance = getDistance(userLocation, targetLocation);
