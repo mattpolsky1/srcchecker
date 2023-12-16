@@ -52,16 +52,23 @@ function checkForAutoCheckOut() {
 }
 
 function autoCheckOut(socketId) {
-    checkedInUsers.delete(socketId);
-    totalCheckIns--;
-    io.emit('updateCount', totalCheckIns);
+    const socket = io.sockets.sockets[socketId];
 
-    // Emit an event to the client to toggle button visibility
-    io.to(socketId).emit('autoCheckOut');
+    // Check if the socket with the specified id exists
+    if (socket) {
+        // Emit an event to the client to toggle button visibility
+        socket.emit('autoCheckOut');
+    }
 
     // Additional logic for updating status and performing other tasks
     updateStatusAndOtherTasks(socketId);
+
+    // Rest of your autoCheckOut logic
+    checkedInUsers.delete(socketId);
+    totalCheckIns--;
+    io.emit('updateCount', totalCheckIns);
 }
+
 app.use(express.static(publicPath));
 
 app.get('/', (req, res) => {
