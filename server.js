@@ -60,7 +60,6 @@ function autoCheckOut(socketId) {
     io.to(socketId).emit('autoCheckOut');
 
     // Additional logic for updating status and performing other tasks
-    updateStatusAndOtherTasks(socketId);
 }
 app.use(express.static(publicPath));
 
