@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
+const cookie = require('cookie'); // Add this line to import the 'cookie' library
 
 const app = express();
 const server = http.createServer(app);
@@ -137,30 +138,30 @@ io.on('connection', async (socket) => {
         }
 
         // Function to check for auto-checkout
-function checkForAutoCheckOut() {
-    const currentTime = Date.now();
+        function checkForAutoCheckOut() {
+            const currentTime = Date.now();
 
-    for (const [socketId, lastCheckInTime] of lastCheckInTimes) {
-        const timeSinceLastCheckIn = currentTime - lastCheckInTime;
+            for (const [socketId, lastCheckInTime] of lastCheckInTimes) {
+                const timeSinceLastCheckIn = currentTime - lastCheckInTime;
 
-        if (timeSinceLastCheckIn > 30000 && checkedInUsers.has(socketId)) {
-            autoCheckOut(socketId);
+                if (timeSinceLastCheckIn > 30000 && checkedInUsers.has(socketId)) {
+                    autoCheckOut(socketId);
+                }
+            }
         }
-    }
-}
 
-// Function for auto-checkout
-function autoCheckOut(socketId) {
-    checkedInUsers.delete(socketId);
-    totalCheckIns--;
-    io.emit('updateCount', totalCheckIns);
+        // Function for auto-checkout
+        function autoCheckOut(socketId) {
+            checkedInUsers.delete(socketId);
+            totalCheckIns--;
+            io.emit('updateCount', totalCheckIns);
 
-    // Emit an event to the client to toggle button visibility
-    io.to(socketId).emit('autoCheckOut');
+            // Emit an event to the client to toggle button visibility
+            io.to(socketId).emit('autoCheckOut');
 
-    // Additional logic for updating status and performing other tasks
-    updateStatusAndOtherTasks(socketId);
-}
+            // Additional logic for updating status and performing other tasks
+            updateStatusAndOtherTasks(socketId);
+        }
 
         function getDistance(location1, location2) {
             const R = 6371;

@@ -142,6 +142,9 @@ const peopleAtGymElement = document.getElementById("peopleAtGym");
             socket.on('responseCheckInStatus', (checkInStatus) => {
                 handleCheckInStatus(checkInStatus);
             });
+            
+            // Request the checked-out cookie when the page loads
+            socket.emit('requestCheckOutCookie');
         });
 
         // Event listener for the Check-In button
@@ -162,6 +165,10 @@ const peopleAtGymElement = document.getElementById("peopleAtGym");
         // Event listener for checked-out status
         socket.on('checkedOutStatus', () => {
             handleCheckInStatus(false);
+        });
+
+        socket.on('setCheckedOutCookie', (checkedOutCookie) => {
+            document.cookie = checkedOutCookie;
         });
 
         function handleCheckInStatus(isCheckedIn) {
