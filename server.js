@@ -5,7 +5,7 @@ const path = require('path');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.ev0u1hj.mongodb.net/CampusHoops?retryWrites=true&w=majority";
-
+const autoCheckOutTimers = new Map();
 const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
@@ -76,6 +76,22 @@ io.on('connection', async (socket) => {
             socket.emit('alreadyCheckedIn');
         }
 
+        // Function to automatically check out users who have been checked in for more than 30 seconds
+        function autoCheckOutExpiredUsers() {
+            const currentTime = Date.now();
+            checkedInUsers.forEach((checkInTime, userId) => {
+                const timeSinceCheckIn = currentTime - checkInTime;
+                if (timeSinceCheckIn >= 30000) {
+                    // Auto-checkout the user
+                    checkedInUsers.delete(userId);
+                    totalCheckIns--;
+                    io.emit('updateCount', totalCheckIns);
+                    socket.broadcast.emit('checkedOutAutomatically');
+                }
+            });
+        }
+        setImmediate(autoCheckOutExpiredUsers);
+
         socket.on('checkIn', async (userLocation) => {
             try {
                 updatePeopleCount();
@@ -93,7 +109,15 @@ io.on('connection', async (socket) => {
                             return;
                         }
                     }
-
+        clearTimeout(autoCheckOutTimers[socket.id]);
+        autoCheckOutTimers[socket.id] = null;
+        autoCheckOutTimers[socket.id] = setTimeout(() => {
+            // Auto-checkout the user after 30 seconds
+            checkedInUsers.delete(socket.id);
+            totalCheckIns--;
+            io.emit('updateCount', totalCheckIns);
+            socket.broadcast.emit('checkedOutAutomatically');
+        }, 30000);
                     if (userLocation && userLocation.latitude && userLocation.longitude) {
                         const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                         const distance = getDistance(userLocation, targetLocation);
@@ -134,7 +158,8 @@ io.on('connection', async (socket) => {
 
         socket.on('checkOut', () => {
             const socketId = socket.id;
-        
+            clearTimeout(autoCheckOutTimers[socket.id]);
+            autoCheckOutTimers[socket.id] = null;
             // If the user has checked in before, remove them and decrement the count
             if (checkedInUsers.has(socketId)) {
                 checkedInUsers.delete(socketId);
@@ -241,7 +266,6 @@ function toRadians(degrees) {
 }
 
 const PORT = process.env.PORT || 8080;
-
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
