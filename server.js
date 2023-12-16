@@ -54,7 +54,22 @@ app.post('/beacon', (req, res) => {
     res.sendStatus(200);
 });
 
+function autoCheckOutExpiredUsers() {
+    const currentTime = Date.now();
+    checkedInUsers.forEach((checkInTime, userId) => {
+        const timeSinceCheckIn = currentTime - checkInTime;
+        if (timeSinceCheckIn >= 30000) {
+            // Auto-checkout the user
+            checkedInUsers.delete(userId);
+            totalCheckIns--;
+            io.emit('updateCount', totalCheckIns);
+            io.to(userId).emit('checkedOutAutomatically'); // Notify the specific user
+        }
+    });
+}
 
+// Run autoCheckOutExpiredUsers every 30 seconds
+setInterval(autoCheckOutExpiredUsers, 30000);
 function updatePeopleCount() {
     const currentTime = Date.now();
     const currentTimeInET = new Date(currentTime - 5 * 60 * 60 * 1000);
@@ -75,24 +90,6 @@ io.on('connection', async (socket) => {
         if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
         }
-        setInterval(() => {
-            const currentTime = Date.now();
-            const checkInThreshold = 40 * 10000; // 40 seconds
-        
-            checkedInUsers.forEach((checkInTime, socketId) => {
-                const timeSinceCheckIn = currentTime - checkInTime;
-        
-                if (timeSinceCheckIn >= checkInThreshold) {
-                    // Auto-checkout the user
-                    checkedInUsers.delete(socketId);
-                    totalCheckIns--;
-                    io.emit('updateCount', totalCheckIns);
-                    io.to(socketId).emit('checkedOutAutomatically');
-        
-                    console.log(`User with socket ID ${socketId} checked out automatically.`);
-                }
-            });
-        }, 1000);
         
         socket.on('checkIn', async (userLocation) => {
             try {
