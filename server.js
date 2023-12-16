@@ -3,6 +3,7 @@ const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const { v4: uuidv4 } = require('uuid'); 
 
 const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.ev0u1hj.mongodb.net/CampusHoops?retryWrites=true&w=majority";
 
@@ -38,7 +39,9 @@ const publicPath = path.join(__dirname, 'Public');
 setInterval(() => {
     checkForAutoCheckOut();
 }, 1000);
-
+function generateSessionId() {
+    return uuidv4();
+}
 function checkForAutoCheckOut() {
     const currentTime = Date.now();
 
@@ -95,6 +98,11 @@ function updatePeopleCount() {
 
 io.on('connection', async (socket) => {
     try {
+        const sessionId = generateSessionId();
+
+        // Emit the session ID to the connected client
+        socket.emit('initSession', sessionId);
+
         socket.emit('initCount', totalCheckIns);
 
         if (checkedInUsers.has(socket.id)) {
