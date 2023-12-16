@@ -2,7 +2,54 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const cookie = require('cookie'); // Add this line to import the 'cookie' library
+const { MongoClient, ServerApiVersion } = require('mongodb');
+
+const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.ev0u1hj.mongodb.net/CampusHoops?retryWrites=true&w=majority";
+
+const client = new MongoClient(uri, {
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
+});
+setInterval(() => {
+    checkForAutoCheckOut();
+}, 1000);
+
+function checkForAutoCheckOut() {
+    const currentTime = Date.now();
+
+    for (const [socketId, lastCheckInTime] of lastCheckInTimes) {
+        const timeSinceLastCheckIn = currentTime - lastCheckInTime;
+
+        if (timeSinceLastCheckIn > 40000 && checkedInUsers.has(socketId)) {
+            autoCheckOut(socketId);
+        }
+    }
+}
+
+function autoCheckOut(socketId) {
+    checkedInUsers.delete(socketId);
+    totalCheckIns--;
+    io.emit('updateCount', totalCheckIns);
+
+    // Emit an event to the client to toggle button visibility
+    io.to(socketId).emit('autoCheckOut');
+
+    // Additional logic for updating status and performing other tasks
+    updateStatusAndOtherTasks(socketId);
+}
+async function run() {
+    try {
+        await client.connect();
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } finally {
+        // Ensure that the client will close when you finish/error
+        // await client.close();
+    }
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -21,6 +68,18 @@ app.get('/', (req, res) => {
     const indexPath = path.join(publicPath, 'index.html');
     res.sendFile(indexPath);
 });
+
+app.post('/beacon', (req, res) => {
+    console.log('Beacon received!');
+    const { checkedIn } = req.body;
+    if (checkedIn) {
+        // Perform auto-checkout logic here
+        console.log('Received beacon. Performing auto-checkout.');
+        autoCheckOut();
+    }
+    res.sendStatus(200);
+});
+
 
 function updatePeopleCount() {
     const currentTime = Date.now();
@@ -72,8 +131,21 @@ io.on('connection', async (socket) => {
 
                             lastCheckInTimes.set(socket.id, Date.now());
 
-                            // Additional logic for updating status and performing other tasks
-                            updateStatusAndOtherTasks(socket.id);
+                            const db = client.db('CampusHoops');
+                            const collection = db.collection('Data');
+
+                            const checkInData = {
+                                socketId: socket.id,
+                                checkInTime: new Date(),
+                                userLocation: userLocation
+                            };
+
+                            try {
+                                await collection.insertOne(checkInData);
+                                console.log('Check-in data inserted into MongoDB');
+                            } catch (error) {
+                                console.error('Error inserting check-in data into MongoDB:', error);
+                            }
                         } else {
                             socket.emit('checkInNotAllowed');
                         }
@@ -88,7 +160,7 @@ io.on('connection', async (socket) => {
 
         socket.on('checkOut', () => {
             const socketId = socket.id;
-
+        
             // If the user has checked in before, remove them and decrement the count
             if (checkedInUsers.has(socketId)) {
                 checkedInUsers.delete(socketId);
@@ -96,11 +168,11 @@ io.on('connection', async (socket) => {
                 io.emit('updateCount', totalCheckIns);
             } else {
                 // If the user has not checked in before (maybe due to page refresh), decrement the count anyway
-                checkedInUsers.delete(socketId);
+                checkedInUsers.delete(socketId)
                 totalCheckIns--;
                 io.emit('updateCount', totalCheckIns);
             }
-
+        
             // Remove the 'checkedOutAutomatically' flag from local storage
             socket.emit('removeCheckedOutAutomaticallyFlag');
         });
@@ -109,82 +181,48 @@ io.on('connection', async (socket) => {
             socket.emit('initCount', totalCheckIns);
         });
 
-        // Schedule auto-checkout function every second
-        setInterval(() => {
-            checkForAutoCheckOut(socket);
-        }, 1000);
+        async function logDailyCheckIns() {
+            try {
+                const db = client.db('CampusHoops');
+                const collection = db.collection('Data');
 
-        function autoCheckOut(socket) {
-            const socketId = socket.id;
+                const currentDate = getCurrentDate();
 
-            if (checkedInUsers.has(socketId)) {
-                checkedInUsers.delete(socketId);
-                totalCheckIns--;
-                io.emit('updateCount', totalCheckIns);
+                const dailyCheckIns = await collection.find({
+                    checkInTime: {
+                        $gte: currentDate,
+                        $lt: new Date(currentDate.getTime() + 24 * 60 * 60 * 1000)
+                    }
+                }).toArray();
 
-                // Emit an event to the client to toggle button visibility
-                socket.emit('autoCheckOut');
-
-                // Additional logic for updating status and performing other tasks
-                updateStatusAndOtherTasks(socketId);
+                console.log('Number of check-ins today:', dailyCheckIns.length);
+                io.emit('dailyCheckIns', { date: currentDate, count: dailyCheckIns.length });
+            } catch (error) {
+                console.error('Error logging daily check-ins:', error);
             }
         }
 
-        // Additional function for updating status and performing other tasks
-        function updateStatusAndOtherTasks(socketId) {
-            // Perform any additional tasks when auto-checkout occurs
-            console.log(`User with socket ID ${socketId} auto-checked out.`);
-            // Update status or perform other necessary actions
-        }
+        async function logHourlyCheckIns() {
+            try {
+                const db = client.db('CampusHoops');
+                const collection = db.collection('Data');
 
-        // Function to check for auto-checkout
-        function checkForAutoCheckOut() {
-            const currentTime = Date.now();
+                const currentHour = getCurrentHour();
 
-            for (const [socketId, lastCheckInTime] of lastCheckInTimes) {
-                const timeSinceLastCheckIn = currentTime - lastCheckInTime;
+                if (currentHour >= 8 && currentHour <= 20) {
+                    const hourlyCheckIns = await collection.find({
+                        checkInTime: {
+                            $gte: new Date().setHours(8, 0, 0),
+                            $lt: new Date().setHours(21, 0, 0)
+                        }
+                    }).toArray();
 
-                if (timeSinceLastCheckIn > 30000 && checkedInUsers.has(socketId)) {
-                    autoCheckOut(socketId);
+                    console.log('Number of check-ins this hour:', hourlyCheckIns.length);
+                    io.emit('hourlyCheckIns', { hour: currentHour, count: hourlyCheckIns.length });
                 }
+            } catch (error) {
+                console.error('Error logging hourly check-ins:', error);
             }
-        }
-
-        // Function for auto-checkout
-        function autoCheckOut(socketId) {
-            checkedInUsers.delete(socketId);
-            totalCheckIns--;
-            io.emit('updateCount', totalCheckIns);
-
-            // Emit an event to the client to toggle button visibility
-            io.to(socketId).emit('autoCheckOut');
-
-            // Additional logic for updating status and performing other tasks
-            updateStatusAndOtherTasks(socketId);
-        }
-
-        function getDistance(location1, location2) {
-            const R = 6371;
-            const lat1 = location1.latitude;
-            const lon1 = location1.longitude;
-            const lat2 = location2.latitude;
-            const lon2 = location2.longitude;
-
-            const dLat = toRadians(lat2 - lat1);
-            const dLon = toRadians(lon2 - lon1);
-
-            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const distance = R * c;
-
-            return distance * 1000;
-        }
-
-        function toRadians(degrees) {
-            return degrees * (Math.PI / 180);
         }
 
         logDailyCheckIns();
@@ -202,6 +240,30 @@ function getCurrentDate() {
 
 function getCurrentHour() {
     return new Date().getHours();
+}
+
+function getDistance(location1, location2) {
+    const R = 6371;
+    const lat1 = location1.latitude;
+    const lon1 = location1.longitude;
+    const lat2 = location2.latitude;
+    const lon2 = location2.longitude;
+
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+
+    return distance * 1000;
+}
+
+function toRadians(degrees) {
+    return degrees * (Math.PI / 180);
 }
 
 const PORT = process.env.PORT || 8080;
