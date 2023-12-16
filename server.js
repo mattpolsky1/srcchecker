@@ -74,11 +74,6 @@ function autoCheckOutExpiredUsers() {
     });
 }
 
-// Add the following event listener to handle clearing cookies on the client side
-socket.on('clearCheckInStatusCookie', () => {
-    Cookies.remove('checkInStatus');
-});
-
 // Run autoCheckOutExpiredUsers every 30 seconds
 setInterval(autoCheckOutExpiredUsers, 30000);
 
@@ -102,6 +97,12 @@ io.on('connection', async (socket) => {
         if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
         }
+       
+        // Add the following event listener to handle clearing cookies on the client side
+socket.on('clearCheckInStatusCookie', () => {
+    Cookies.remove('checkInStatus');
+});
+
 
         socket.on('checkIn', async (userLocation) => {
             try {
