@@ -52,18 +52,15 @@ function checkForAutoCheckOut() {
 }
 
 function autoCheckOut(socketId) {
-    // Check if the socket is still connected
-    if (io.sockets.connected[socketId]) {
-        checkedInUsers.delete(socketId);
-        totalCheckIns--;
-        io.emit('updateCount', totalCheckIns);
+    checkedInUsers.delete(socketId);
+    totalCheckIns--;
+    io.emit('updateCount', totalCheckIns);
 
-        // Emit an event to the client to toggle button visibility
-        io.to(socketId).emit('autoCheckOut');
+    // Emit an event to the client to toggle button visibility
+    io.to(socketId).emit('autoCheckOut');
 
-        // Additional logic for updating status and performing other tasks
-        updateStatusAndOtherTasks(socketId);
-    }
+    // Additional logic for updating status and performing other tasks
+    updateStatusAndOtherTasks(socketId);
 }
 app.use(express.static(publicPath));
 
@@ -105,16 +102,6 @@ io.on('connection', async (socket) => {
             socket.emit('alreadyCheckedIn');
         }
 
-        socket.on('disconnect', () => {
-            // Handle disconnections
-            const disconnectedSocketId = socket.id;
-    
-            // Remove the disconnected socket from your maps
-            checkedInUsers.delete(disconnectedSocketId);
-            lastCheckInTimes.delete(disconnectedSocketId);
-            clearInterval(socket.intervalId);
-        });
-    
         socket.on('checkIn', async (userLocation) => {
             try {
                 updatePeopleCount();
