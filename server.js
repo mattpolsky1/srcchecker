@@ -77,7 +77,7 @@ io.on('connection', async (socket) => {
         }
         setInterval(() => {
             const currentTime = Date.now();
-            const checkInThreshold = 40 * 1000; // 40 seconds
+            const checkInThreshold = 40 * 10000; // 40 seconds
         
             checkedInUsers.forEach((checkInTime, socketId) => {
                 const timeSinceCheckIn = currentTime - checkInTime;
