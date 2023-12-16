@@ -212,25 +212,39 @@ if ('serviceWorker' in navigator && 'SyncManager' in window) {
         }
 
         function initializeCheckIn() {
-    const { status, timestamp } = getCheckInStatusFromCookie();
+            const { status, timestamp } = getCheckInStatusFromCookie();
 
-    if (status === "checkedIn") {
-        checkedIn = true;
-        updateStatus("Checked In");
-        toggleButtonVisibility(); // Hide the button
-    } else {
-        checkedIn = false;
-        updateStatus("Checked Out");
-        toggleButtonVisibility(); // Show the button
-    }
-}
+            if (status === "checkedIn") {
+                checkedIn = true;
+                updateStatus("Checked In");
+                toggleButtonVisibility(); // Hide the button
 
-document.addEventListener("DOMContentLoaded", () => {
-    socket.emit('requestCheckInStatus');
-    socket.on('responseCheckInStatus', (checkInStatus) => {
-        initializeCheckIn(); // Initialize check-in status
-    });
-});
+                const currentTime = Date.now();
+                const timeElapsed = currentTime - parseInt(timestamp, 10);
+                const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
+
+                if (remainingTime > 0) {
+                    setTimeout(autoCheckOut, remainingTime);
+                } else {
+                    Cookies.remove('checkInTimestamp');
+                    checkedIn = false;
+                    updateStatus("Checked Out");
+                    toggleButtonVisibility(); // Show the button
+                }
+            } else {
+                checkedIn = false;
+                updateStatus("Checked Out");
+                toggleButtonVisibility(); // Show the button
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            socket.emit('requestCheckInStatus');
+            socket.on('responseCheckInStatus', (checkInStatus) => {
+                initializeCheckIn(); // Initialize check-in status and timer if applicable
+            });
+        });
+
         socket.on('removeCheckedOutAutomaticallyFlag', () => {
     Cookies.remove('checkedOutAutomatically');
 });
@@ -287,8 +301,8 @@ function toggleButtonVisibility() {
   }
 });
 
-function autoCheckOut() {
-    console.log('Auto checkout function called!');
+        function autoCheckOut() {
+        console.log('Auto checkout function called!');
     if (checkedIn) {
         checkedIn = false;
         updateStatus("Checked Out");
