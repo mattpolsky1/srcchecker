@@ -34,7 +34,7 @@ let lastCheckInTime = 0;
 
 const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
-
+const CHECKIN_COOLDOWN_DURATION = 40000; // 30 seconds
 const publicPath = path.join(__dirname, 'Public');
 app.use(express.static(publicPath));
 
@@ -54,6 +54,27 @@ app.post('/beacon', (req, res) => {
     res.sendStatus(200);
 });
 
+function autoCheckOut(socket) {
+    const socketId = socket.id;
+
+    if (checkedInUsers.has(socketId)) {
+        checkedInUsers.delete(socketId);
+        totalCheckIns--;
+        io.emit('updateCount', totalCheckIns);
+
+        // Remove the 'checkedOutAutomatically' flag from local storage
+        socket.emit('removeCheckedOutAutomaticallyFlag');
+
+        // Additional logic for updating status and performing other tasks
+        updateStatusAndOtherTasks(socketId);
+    }
+}
+
+function updateStatusAndOtherTasks(socketId) {
+    // Perform any additional tasks when auto-checkout occurs
+    console.log(`User with socket ID ${socketId} auto-checked out.`);
+    // Update status or perform other necessary actions
+}
 
 function updatePeopleCount() {
     const currentTime = Date.now();
@@ -97,7 +118,15 @@ io.on('connection', async (socket) => {
                     if (userLocation && userLocation.latitude && userLocation.longitude) {
                         const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                         const distance = getDistance(userLocation, targetLocation);
+                        const currentTime = Date.now();
+                        const lastCheckInTime = lastCheckInTimes.get(socket.id);
+                        const timeSinceLastCheckIn = currentTime - lastCheckInTime;
 
+                        if (timeSinceLastCheckIn > CHECKIN_COOLDOWN_DURATION) {
+                            // Perform auto-checkout logic here
+                            console.log('Auto-checkout after browser close.');
+                            autoCheckOut(socket);
+                        }
                         if (distance <= 10000) {
                             checkedInUsers.set(socket.id, true);
                             totalCheckIns++;
