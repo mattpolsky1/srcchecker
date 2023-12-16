@@ -75,6 +75,25 @@ io.on('connection', async (socket) => {
         if (checkedInUsers.has(socket.id)) {
             socket.emit('alreadyCheckedIn');
         }
+        setInterval(() => {
+            const currentTime = Date.now();
+            const checkInThreshold = 40 * 1000; // 40 seconds
+        
+            checkedInUsers.forEach((checkInTime, socketId) => {
+                const timeSinceCheckIn = currentTime - checkInTime;
+        
+                if (timeSinceCheckIn >= checkInThreshold) {
+                    // Auto-checkout the user
+                    checkedInUsers.delete(socketId);
+                    totalCheckIns--;
+                    io.emit('updateCount', totalCheckIns);
+                    io.to(socketId).emit('checkedOutAutomatically');
+        
+                    console.log(`User with socket ID ${socketId} checked out automatically.`);
+                }
+            });
+        }, 1000);
+        
         socket.on('checkIn', async (userLocation) => {
             try {
                 updatePeopleCount();
