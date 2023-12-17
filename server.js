@@ -13,6 +13,7 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+
 async function run() {
     try {
         await client.connect();
@@ -26,41 +27,15 @@ async function run() {
 
 const app = express();
 const server = http.createServer(app);
-const io = require('socket.io')(server);
+const io = socketIO(server);
 
 let totalCheckIns = 60;
 let lastCheckInTime = 0;
 
 const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
-let checkedIn=false
+
 const publicPath = path.join(__dirname, 'Public');
-setInterval(() => {
-    checkForAutoCheckOut();
-}, 1000);
-
-function checkForAutoCheckOut() {
-    const currentTime = Date.now();
-
-    for (const [socketId, lastCheckInTime] of lastCheckInTimes) {
-        const timeSinceLastCheckIn = currentTime - lastCheckInTime;
-
-        if (timeSinceLastCheckIn > 40000 && checkedInUsers.has(socketId)) {
-            autoCheckOut(socketId);
-        }
-    }
-}
-
-function autoCheckOut(socketId) {
-    checkedInUsers.delete(socketId);
-    totalCheckIns--;
-    io.emit('updateCount', totalCheckIns);
-
-    // Emit an event to the client to toggle button visibility
-    io.to(socketId).emit('autoCheckOut');
-
-    // Additional logic for updating status and performing other tasks
-}
 app.use(express.static(publicPath));
 
 app.get('/', (req, res) => {

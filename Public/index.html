@@ -121,14 +121,14 @@
     <img id="myImage" src="https://i.ibb.co/gPhHQ7f/campushoopslogo-02.png" alt="campushoopslogo-02">
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry&callback=initMap"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 
 
 let isRefreshing = false;
-let checkedIn = false;
+
 // Listen for beforeunload event
 // Listen for page unload
 window.addEventListener('beforeunload', (event) => {
@@ -181,6 +181,7 @@ if ('serviceWorker' in navigator && 'SyncManager' in window) {
 
         const socket = io();
 
+        let checkedIn = false;
         const cookieKey = "checkInStatus";
 
         function resumeTimer() {
