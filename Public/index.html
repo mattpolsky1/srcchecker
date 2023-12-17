@@ -121,34 +121,10 @@
     <img id="myImage" src="https://i.ibb.co/gPhHQ7f/campushoopslogo-02.png" alt="campushoopslogo-02">
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry&callback=initMap"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-
-
-let isRefreshing = false;
-
-// Listen for beforeunload event
-// Listen for page unload
-window.addEventListener('beforeunload', (event) => {
-    console.log('Beforeunload event triggered');
-    if (!isRefreshing && checkedIn) {
-        navigator.sendBeacon('/beacon', JSON.stringify({ checkedIn }));
-    }
-});
-
-// Listen for page visibility change
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') {
-    isRefreshing = true;
-  } else {
-    isRefreshing = false;
-  }
-});
-
-
-
         const peopleAtGymElement = document.getElementById("peopleAtGym");
         const toggleCheckInButton = document.getElementById("toggleCheckInButton");
         const statusLabel = document.getElementById("statusLabel");
@@ -266,18 +242,7 @@ function toggleButtonVisibility() {
             return { status, timestamp };
         }
 
-        navigator.serviceWorker.addEventListener('message', (event) => {
-  const { type } = event.data;
-  if (type === 'tick') {
-    // Handle the tick event, update the UI if needed
-  } else if (type === 'autoCheckOut') {
-    // Handle the auto-checkout event
-    autoCheckOut();
-  }
-});
-
         function autoCheckOut() {
-        console.log('Auto checkout function called!');
     if (checkedIn) {
         checkedIn = false;
         updateStatus("Checked Out");
