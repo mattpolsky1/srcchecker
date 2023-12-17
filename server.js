@@ -26,14 +26,14 @@ async function run() {
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
+const io = require('socket.io'(server));
 
 let totalCheckIns = 60;
 let lastCheckInTime = 0;
 
 const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
-
+let checkedIn=false
 const publicPath = path.join(__dirname, 'Public');
 setInterval(() => {
     checkForAutoCheckOut();
