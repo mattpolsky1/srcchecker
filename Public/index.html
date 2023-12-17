@@ -147,31 +147,6 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js')
-    .then(registration => {
-      console.log('Service Worker registered with scope:', registration.scope);
-
-      if (registration.active) {
-        registration.active.postMessage({
-          type: 'start',
-          checkedIn: checkedIn,
-        });
-      } else {
-        console.error('Service Worker controller is null.');
-      }
-    })
-    .catch(error => {
-      console.error('Service Worker registration failed:', error);
-    });
-}
-
-if ('serviceWorker' in navigator && 'SyncManager' in window) {
-  navigator.serviceWorker.ready.then((registration) => {
-    // Register for background sync
-    registration.sync.register('autoCheckOut');
-  });
-}
 
 
         const peopleAtGymElement = document.getElementById("peopleAtGym");
