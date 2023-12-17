@@ -125,6 +125,55 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
+
+
+let isRefreshing = false;
+
+// Listen for beforeunload event
+// Listen for page unload
+window.addEventListener('beforeunload', (event) => {
+    console.log('Beforeunload event triggered');
+    if (!isRefreshing && checkedIn) {
+        navigator.sendBeacon('/beacon', JSON.stringify({ checkedIn }));
+    }
+});
+
+// Listen for page visibility change
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    isRefreshing = true;
+  } else {
+    isRefreshing = false;
+  }
+});
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(registration => {
+      console.log('Service Worker registered with scope:', registration.scope);
+
+      if (registration.active) {
+        registration.active.postMessage({
+          type: 'start',
+          checkedIn: checkedIn,
+        });
+      } else {
+        console.error('Service Worker controller is null.');
+      }
+    })
+    .catch(error => {
+      console.error('Service Worker registration failed:', error);
+    });
+}
+
+if ('serviceWorker' in navigator && 'SyncManager' in window) {
+  navigator.serviceWorker.ready.then((registration) => {
+    // Register for background sync
+    registration.sync.register('autoCheckOut');
+  });
+}
+
+
         const peopleAtGymElement = document.getElementById("peopleAtGym");
         const toggleCheckInButton = document.getElementById("toggleCheckInButton");
         const statusLabel = document.getElementById("statusLabel");
@@ -242,7 +291,18 @@ function toggleButtonVisibility() {
             return { status, timestamp };
         }
 
+        navigator.serviceWorker.addEventListener('message', (event) => {
+  const { type } = event.data;
+  if (type === 'tick') {
+    // Handle the tick event, update the UI if needed
+  } else if (type === 'autoCheckOut') {
+    // Handle the auto-checkout event
+    autoCheckOut();
+  }
+});
+
         function autoCheckOut() {
+        console.log('Auto checkout function called!');
     if (checkedIn) {
         checkedIn = false;
         updateStatus("Checked Out");

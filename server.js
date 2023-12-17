@@ -3,6 +3,7 @@ const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const { v4: uuidv4 } = require('uuid'); 
 
 const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.ev0u1hj.mongodb.net/CampusHoops?retryWrites=true&w=majority";
 
@@ -13,7 +14,6 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
-
 async function run() {
     try {
         await client.connect();
@@ -36,12 +36,52 @@ const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
 
 const publicPath = path.join(__dirname, 'Public');
+setInterval(() => {
+    checkForAutoCheckOut();
+}, 1000);
+function generateSessionId() {
+    return uuidv4();
+}
+function checkForAutoCheckOut() {
+    const currentTime = Date.now();
+
+    for (const [socketId, lastCheckInTime] of lastCheckInTimes) {
+        const timeSinceLastCheckIn = currentTime - lastCheckInTime;
+
+        if (timeSinceLastCheckIn > 40000 && checkedInUsers.has(socketId)) {
+            autoCheckOut(socketId);
+        }
+    }
+}
+
+function autoCheckOut(socketId) {
+    checkedInUsers.delete(socketId);
+    totalCheckIns--;
+    io.emit('updateCount', totalCheckIns);
+
+    // Emit an event to the client to toggle button visibility
+    io.to(socketId).emit('autoCheckOut');
+
+    // Additional logic for updating status and performing other tasks
+}
 app.use(express.static(publicPath));
 
 app.get('/', (req, res) => {
     const indexPath = path.join(publicPath, 'index.html');
     res.sendFile(indexPath);
 });
+
+app.post('/beacon', (req, res) => {
+    console.log('Beacon received!');
+    const { checkedIn } = req.body;
+    if (checkedIn) {
+        // Perform auto-checkout logic here
+        console.log('Received beacon. Performing auto-checkout.');
+        autoCheckOut();
+    }
+    res.sendStatus(200);
+});
+
 
 function updatePeopleCount() {
     const currentTime = Date.now();
@@ -58,6 +98,11 @@ function updatePeopleCount() {
 
 io.on('connection', async (socket) => {
     try {
+        const sessionId = generateSessionId();
+
+        // Emit the session ID to the connected client
+        socket.emit('initSession', sessionId);
+
         socket.emit('initCount', totalCheckIns);
 
         if (checkedInUsers.has(socket.id)) {
