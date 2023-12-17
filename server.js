@@ -26,7 +26,7 @@ async function run() {
 
 const app = express();
 const server = http.createServer(app);
-const io = require('socket.io'(server));
+const io = require('socket.io')(server);
 
 let totalCheckIns = 60;
 let lastCheckInTime = 0;
