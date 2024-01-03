@@ -47,6 +47,19 @@
             text-align: center; /* Center the text */
             margin-top: 20px;
         }
+        
+        #checkInDisplay {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    color: #295296;
+}
+
 
         button.checkIn {
             font-size: 48px; /* Larger font size for mobile */
@@ -109,6 +122,7 @@
             #gymStatus {
                 font-size: 30px; /* Adjusted font size */
             }
+            
         }
     </style>
 </head>
@@ -243,6 +257,9 @@ if ('serviceWorker' in navigator && 'SyncManager' in window) {
             socket.on('responseCheckInStatus', (checkInStatus) => {
                 initializeCheckIn(); // Initialize check-in status and timer if applicable
             });
+            socket.on('checkinTrackerUpdated', (count) => {
+        updateCheckinTrackerDisplay(count);
+    });
         });
 
         socket.on('removeCheckedOutAutomaticallyFlag', () => {
@@ -372,15 +389,29 @@ socket.on('initCount', (count) => {
     });
 
     function updateCount(count) {
-        peopleAtGymElement.textContent = count;
-        if (count > 50) {
-            gymStatusLabel.textContent = "Packed";
-            gymStatusLabel.style.color = "#FF5733"; // Red color
-        } else {
-            gymStatusLabel.textContent = "Empty";
-            gymStatusLabel.style.color = "#295296"; // Blue color
-        }
+    if (count > 50) {
+        gymStatusLabel.textContent = "Packed";
+        gymStatusLabel.style.color = "#FF5733"; // Red color
+    } else {
+        gymStatusLabel.textContent = "Empty";
+        gymStatusLabel.style.color = "#295296"; // Blue color
     }
+}
+
+function updateCheckinTrackerDisplay(checkinTracker) {
+    const currentDate = new Date();
+    const formattedDate = currentDate.toLocaleDateString();
+    const checkInDisplay = `Check-Ins Today: ${checkinTracker}`;
+    const displayElement = document.getElementById("checkInDisplay");
+    if (displayElement) {
+        displayElement.textContent = checkInDisplay;
+    } else {
+        const displayContainer = document.createElement("div");
+        displayContainer.id = "checkInDisplay";
+        displayContainer.textContent = checkInDisplay;
+        document.body.appendChild(displayContainer);
+    }
+}
 
     function updateStatus(status) {
         statusLabel.textContent = status;
