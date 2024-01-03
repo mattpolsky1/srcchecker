@@ -6,7 +6,7 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 const { v4: uuidv4 } = require('uuid'); 
 
 const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.ev0u1hj.mongodb.net/CampusHoops?retryWrites=true&w=majority";
-const resetHour = 6; // 6 AM
+
 const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
@@ -31,7 +31,6 @@ const io = socketIO(server);
 
 let totalCheckIns = 60;
 let lastCheckInTime = 0;
-let checkinTracker = 0;
 
 const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
@@ -88,11 +87,10 @@ function updatePeopleCount() {
     const currentTime = Date.now();
     const currentTimeInET = new Date(currentTime - 5 * 60 * 60 * 1000);
     const resetTimeInET = new Date(currentTimeInET);
-    resetTimeInET.setHours(resetHour, 0, 0, 0);
+    resetTimeInET.setHours(20, 0, 0, 0);
 
     if (currentTimeInET >= resetTimeInET) {
         totalCheckIns = 0;
-        checkinTracker = 0; // Reset checkinTracker
     }
 
     lastCheckInTime = currentTime;
@@ -136,7 +134,6 @@ io.on('connection', async (socket) => {
                         if (distance <= 10000) {
                             checkedInUsers.set(socket.id, true);
                             totalCheckIns++;
-                            checkinTracker++; // Increment totalCheckIns
                             io.emit('updateCount', totalCheckIns);
 
                             lastCheckInTimes.set(socket.id, Date.now());
@@ -166,20 +163,7 @@ io.on('connection', async (socket) => {
             } catch (error) {
                 console.error('Error handling check-in:', error);
             }
-            function emitCheckinTracker() {
-                io.emit('checkinTrackerUpdated', checkinTracker);
-            }
-            function updateCheckinTracker() {
-                // Update checkinTracker based on your logic
-                // For example, if checkinTracker increments by 1:
-                checkinTracker += 1;
-        
-                // Emit the updated count to all connected clients
-                emitCheckinTracker();
-            }
-            updateCheckinTracker();
         });
-
 
         socket.on('checkOut', () => {
             const socketId = socket.id;
