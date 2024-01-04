@@ -4,7 +4,7 @@ const socketIO = require('socket.io');
 const path = require('path');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const { v4: uuidv4 } = require('uuid'); 
-
+let isAutoCheckoutInProgress = false;
 const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.ev0u1hj.mongodb.net/CampusHoops?retryWrites=true&w=majority";
 
 const client = new MongoClient(uri, {
@@ -55,14 +55,23 @@ function checkForAutoCheckOut() {
 }
 
 function autoCheckOut(socketId) {
-    checkedInUsers.delete(socketId);
-    totalCheckIns--;
-    io.emit('updateCount', totalCheckIns);
+    if (!isAutoCheckoutInProgress && checkedInUsers.has(socketId)) {
+        isAutoCheckoutInProgress = true;
 
-    // Emit an event to the client to toggle button visibility
-    io.to(socketId).emit('autoCheckOut');
+        checkedInUsers.delete(socketId);
+        totalCheckIns--;
+        io.emit('updateCount', totalCheckIns);
 
-    // Additional logic for updating status and performing other tasks
+        // Emit an event to the client to toggle button visibility
+        io.to(socketId).emit('autoCheckOut');
+
+        // Additional logic for updating status and performing other tasks
+
+        // Reset the flag after a short delay to avoid potential issues
+        setTimeout(() => {
+            isAutoCheckoutInProgress = false;
+        }, 500);
+    }
 }
 app.use(express.static(publicPath));
 
