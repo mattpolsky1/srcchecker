@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const enforce = require('express-sslify');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const { v4: uuidv4 } = require('uuid'); 
 let isAutoCheckoutInProgress = false;
@@ -36,7 +35,6 @@ let lastCheckInTime = 0;
 const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
 
-app.use(enforce.HTTPS({ trustProtoHeader: true }));
 const publicPath = path.join(__dirname, 'Public');
 setInterval(() => {
     checkForAutoCheckOut();
