@@ -381,18 +381,15 @@ socket.on('initCount', (count) => {
     });
 
     function updateCount(count) {
-    peopleAtGymElement.textContent = count;
-    if (count >= 50) {
-        gymStatusLabel.textContent = "Packed";
-        gymStatusLabel.style.color = "#FF5733"; // Red color
-    } else if (count >= 20 && count <= 49) {
-        gymStatusLabel.textContent = "Good Runs";
-        gymStatusLabel.style.color = "#32CD32"; // Green color
-    } else {
-        gymStatusLabel.textContent = "Empty";
-        gymStatusLabel.style.color = "#295296"; // Blue color
+        peopleAtGymElement.textContent = count;
+        if (count > 50) {
+            gymStatusLabel.textContent = "Packed";
+            gymStatusLabel.style.color = "#FF5733"; // Red color
+        } else {
+            gymStatusLabel.textContent = "Good Runs";
+            gymStatusLabel.style.color = "#295296"; // Blue color
+        }
     }
-}
 
 
     function updateStatus(status) {
