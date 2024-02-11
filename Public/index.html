@@ -1,19 +1,15 @@
 <!DOCTYPE html>
 <html>
-<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <head>
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L45Z9JYDS2"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-L45Z9JYDS2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-        gtag('js', new Date());
-
-        gtag('config', 'G-L45Z9JYDS2');
-    </script>
+  gtag('config', 'G-L45Z9JYDS2');
+</script>
     <title>Gym Attendance</title>
     <style>
         body {
@@ -31,15 +27,13 @@
         }
 
         h1 {
-            font-size: 72px;
-            /* Larger font size */
+            font-size: 72px; /* Larger font size */
             font-weight: bold;
             color: #295296;
         }
 
         #peopleAtGym {
-            font-size: 100px;
-            /* Larger font size */
+            font-size: 100px; /* Larger font size */
             font-weight: bold;
             color: #295296;
             text-align: center;
@@ -47,8 +41,7 @@
         }
 
         #status {
-            font-size: 24px;
-            /* Larger font size */
+            font-size: 24px; /* Larger font size */
             font-weight: bold;
             color: #5b5857;
             position: absolute;
@@ -57,21 +50,17 @@
         }
 
         #gymStatus {
-            font-size: 36px;
-            /* Adjusted font size */
+            font-size: 36px; /* Adjusted font size */
             font-weight: bold;
             color: #295296;
-            text-align: center;
-            /* Center the text */
+            text-align: center; /* Center the text */
             margin-top: 20px;
         }
 
         button.checkIn {
-            font-size: 48px;
-            /* Larger font size for mobile */
+            font-size: 48px; /* Larger font size for mobile */
             font-weight: bold;
-            padding: 30px 60px;
-            /* Larger button size */
+            padding: 30px 60px; /* Larger button size */
             background-color: #295296;
             color: #fff;
             border: none;
@@ -81,8 +70,7 @@
         }
 
         button.checkIn.hidden {
-            display: none;
-            /* Hide the button */
+            display: none; /* Hide the button */
         }
 
         button.checkOut {
@@ -112,89 +100,88 @@
 
         /* Style to position the image at the bottom left */
         #logo img {
-            width: 250px;
-            /* Slightly larger logo */
+            width: 250px; /* Slightly larger logo */
             height: auto;
         }
 
         /* Media query for small screens (mobile devices) */
         @media screen and (max-width: 768px) {
             #peopleAtGym {
-                font-size: 72px;
-                /* Larger font size */
+                font-size: 72px; /* Larger font size */
             }
 
             #status {
-                font-size: 24px;
-                /* Larger font size */
+                font-size: 24px; /* Larger font size */
                 position: static;
             }
 
             #gymStatus {
-                font-size: 30px;
-                /* Adjusted font size */
+                font-size: 30px; /* Adjusted font size */
             }
         }
     </style>
 </head>
-
 <body>
-    <h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
-    <div id="status">Status: <span id="statusLabel">Checked Out</span></div>
-    <div id="gymStatus">Gym Status: <span id="gymStatusLabel">Empty</span></div>
-    <button id="toggleCheckInButton" class="checkIn">Check In</button>
-    <div id="logo">
-        <img id="myImage" src="https://i.ibb.co/gPhHQ7f/campushoopslogo-02.png" alt="campushoopslogo-02">
-    </div>
+<h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
+<div id="status">Status: <span id="statusLabel">Checked Out</span></div>
+<div id="gymStatus">Gym Status: <span id="gymStatusLabel">Good Runs</span></div>
+<button id="toggleCheckInButton" class="checkIn">Check In</button>
+<div id="logo">
+    <img id="myImage" src="https://i.ibb.co/gPhHQ7f/campushoopslogo-02.png" alt="campushoopslogo-02">
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        let isRefreshing = false;
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry&callback=initMap"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
 
-        // Listen for beforeunload event
-        // Listen for page unload
-        window.addEventListener('beforeunload', (event) => {
-            console.log('Beforeunload event triggered');
-            if (!isRefreshing && checkedIn) {
-                navigator.sendBeacon('/beacon', JSON.stringify({ checkedIn }));
-            }
+
+let isRefreshing = false;
+
+// Listen for beforeunload event
+// Listen for page unload
+window.addEventListener('beforeunload', (event) => {
+    console.log('Beforeunload event triggered');
+    if (!isRefreshing && checkedIn) {
+        navigator.sendBeacon('/beacon', JSON.stringify({ checkedIn }));
+    }
+});
+
+// Listen for page visibility change
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    isRefreshing = true;
+  } else {
+    isRefreshing = false;
+  }
+});
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(registration => {
+      console.log('Service Worker registered with scope:', registration.scope);
+
+      if (registration.active) {
+        registration.active.postMessage({
+          type: 'start',
+          checkedIn: checkedIn,
         });
+      } else {
+        console.error('Service Worker controller is null.');
+      }
+    })
+    .catch(error => {
+      console.error('Service Worker registration failed:', error);
+    });
+}
 
-        // Listen for page visibility change
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') {
-                isRefreshing = true;
-            } else {
-                isRefreshing = false;
-            }
-        });
+if ('serviceWorker' in navigator && 'SyncManager' in window) {
+  navigator.serviceWorker.ready.then((registration) => {
+    // Register for background sync
+    registration.sync.register('autoCheckOut');
+  });
+}
 
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(registration => {
-                    console.log('Service Worker registered with scope:', registration.scope);
-
-                    if (registration.active) {
-                        registration.active.postMessage({
-                            type: 'start',
-                            checkedIn: checkedIn,
-                        });
-                    } else {
-                        console.error('Service Worker controller is null.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Service Worker registration failed:', error);
-                });
-        }
-
-        if ('serviceWorker' in navigator && 'SyncManager' in window) {
-            navigator.serviceWorker.ready.then((registration) => {
-                // Register for background sync
-                registration.sync.register('autoCheckOut');
-            });
-        }
 
         const peopleAtGymElement = document.getElementById("peopleAtGym");
         const toggleCheckInButton = document.getElementById("toggleCheckInButton");
@@ -268,32 +255,32 @@
         });
 
         socket.on('removeCheckedOutAutomaticallyFlag', () => {
-            Cookies.remove('checkedOutAutomatically');
-        });
+    Cookies.remove('checkedOutAutomatically');
+});
 
-        socket.on('dailyCheckIns', (data) => {
-            console.log(`Number of check-ins on ${data.date.toDateString()}: ${data.count}`);
-        });
+    socket.on('dailyCheckIns', (data) => {
+    console.log(`Number of check-ins on ${data.date.toDateString()}: ${data.count}`);
+});
 
-        // Event listener for hourly check-ins
-        socket.on('hourlyCheckIns', (data) => {
-            console.log(`Number of check-ins this hour (${data.hour}:00 - ${data.hour + 1}:00): ${data.count}`);
-        });
+// Event listener for hourly check-ins
+socket.on('hourlyCheckIns', (data) => {
+    console.log(`Number of check-ins this hour (${data.hour}:00 - ${data.hour + 1}:00): ${data.count}`);
+});
 
-        // Check for stored check-in status and timestamp on page load
-        const { status, timestamp } = getCheckInStatusFromCookie();
-        if (status === "checkedIn") {
-            checkedIn = true;
-            updateStatus("Checked In");
-            toggleButtonVisibility(); // Hide the button
-            // Set a timer to automatically check out after 30 seconds
-            setTimeout(autoCheckOut, 30000); // 30 seconds
-        }
+    // Check for stored check-in status and timestamp on page load
+    const { status, timestamp } = getCheckInStatusFromCookie();
+    if (status === "checkedIn") {
+        checkedIn = true;
+        updateStatus("Checked In");
+        toggleButtonVisibility(); // Hide the button
+        // Set a timer to automatically check out after 30 seconds
+        setTimeout(autoCheckOut, 30000); // 30 seconds
+    }
 
-        let checkInButtonVisible = true; // Track the visibility of the button
+let checkInButtonVisible = true; // Track the visibility of the button
 
-        // Function to toggle the button's visibility
-        function toggleButtonVisibility() {
+// Function to toggle the button's visibility
+function toggleButtonVisibility() {
             const button = document.getElementById("toggleCheckInButton");
             if (checkedIn) {
                 button.style.display = "none"; // Hide the button
@@ -314,83 +301,128 @@
         }
 
         navigator.serviceWorker.addEventListener('message', (event) => {
-            const { type } = event.data;
-            if (type === 'tick') {
-                // Handle the tick event, update the UI if needed
-            } else if (type === 'autoCheckOut') {
-                // Handle the auto-checkout event
-                autoCheckOut();
-            }
-        });
+  const { type } = event.data;
+  if (type === 'tick') {
+    // Handle the tick event, update the UI if needed
+  } else if (type === 'autoCheckOut') {
+    // Handle the auto-checkout event
+    autoCheckOut();
+  }
+});
 
         function autoCheckOut() {
-            console.log('Auto checkout function called!');
-            if (checkedIn) {
-                checkedIn = false;
-                updateStatus("Checked Out");
-                toggleButtonVisibility(); // Show the button
-                Cookies.remove(cookieKey);
-                Cookies.remove('checkInTimestamp');
-                socket.emit('checkOut');
-                Cookies.set('checkedOutAutomatically', 'true');
-            }
+        console.log('Auto checkout function called!');
+    if (checkedIn) {
+        checkedIn = false;
+        updateStatus("Checked Out");
+        toggleButtonVisibility(); // Show the button
+        Cookies.remove(cookieKey);
+        Cookies.remove('checkInTimestamp');
+        socket.emit('checkOut');
+        Cookies.set('checkedOutAutomatically', 'true');
+    }
+}
+
+// Event listener for the Check-In button
+toggleCheckInButton.addEventListener("click", () => {
+    if (!checkedIn) {
+        const currentTime = Date.now();
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const userLatitude = position.coords.latitude;
+                const userLongitude = position.coords.longitude;
+                const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
+                const distance = getDistance({ latitude: userLatitude, longitude: userLongitude }, targetLocation);
+
+                if (distance <= 10000) { // Within 10 miles
+                    checkedIn = true;
+                    Cookies.set("checkInStatus", "checkedIn");
+                    updateStatus("Checked In");
+                    toggleButtonVisibility(); // Hide the button immediately
+
+                    // Store check-in status and timestamp in cookies
+                    setCheckInStatusInCookie("checkedIn", currentTime);
+
+                    // Set a timer to automatically check out after 30 seconds
+                    setTimeout(autoCheckOut, 30000); // 30 seconds
+
+                    socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
+                } else {
+                    alert("You are not within 10 miles of the specified location. Check-in not allowed.");
+                }
+            }, (error) => {
+                console.error('Error getting user location:', error);
+                alert('Error getting your location. Please check your web settings and try again.');
+            });
+        } else {
+            alert('Geolocation is not supported by your browser.');
         }
+    }
+});
 
-        // Event listener for the Check-In button
-        toggleCheckInButton.addEventListener("click", () => {
-            if (!checkedIn) {
-                const currentTime = Date.now();
-                checkedIn = true;
-                Cookies.set("checkInStatus", "checkedIn");
-                updateStatus("Checked In");
-                toggleButtonVisibility(); // Hide the button immediately
+socket.on('initCount', (count) => {
+        updateCount(count);
+    });
 
-                // Store check-in status and timestamp in cookies
-                setCheckInStatusInCookie("checkedIn", currentTime);
+  socket.on('updateCount', (count) => {
+        updateCount(count);
+    });
 
-                // Set a timer to automatically check out after 30 seconds
-                setTimeout(autoCheckOut, 30000); // 30 seconds
+    socket.on('checkInNotAllowed', () => {
+        alert('You are not within 10 miles of the specified location. Check-in not allowed.');
+    });
 
-                socket.emit('checkIn');
-            }
-        });
+    socket.on('checkedOutAutomatically', () => {
+        alert('You have been checked out automatically after 30 seconds of inactivity.');
+        checkedIn = false;
+        Cookies.remove("checkInStatus");
+        updateStatus("Checked Out");
+        toggleCheckInButton.classList.remove("hidden"); // Show the button
+    });
 
-        socket.on('initCount', (count) => {
-            updateCount(count);
-        });
-
-        socket.on('updateCount', (count) => {
-            updateCount(count);
-        });
-
-        socket.on('checkInNotAllowed', () => {
-            alert('You are not within 10 miles of the specified location. Check-in not allowed.');
-        });
-
-        socket.on('checkedOutAutomatically', () => {
-            alert('You have been checked out automatically after 30 seconds of inactivity.');
-            checkedIn = false;
-            Cookies.remove("checkInStatus");
-            updateStatus("Checked Out");
-            toggleCheckInButton.classList.remove("hidden"); // Show the button
-        });
-
-        function updateCount(count) {
-            peopleAtGymElement.textContent = count;
-            if (count > 50) {
-                gymStatusLabel.textContent = "Packed";
-                gymStatusLabel.style.color = "#FF5733"; // Red color
-            } else {
-                gymStatusLabel.textContent = "Empty";
-                gymStatusLabel.style.color = "#295296"; // Blue color
-            }
+    function updateCount(count) {
+        peopleAtGymElement.textContent = count;
+        if (count > 50) {
+            gymStatusLabel.textContent = "Packed";
+            gymStatusLabel.style.color = "#FF5733"; // Red color
+        } else {
+            gymStatusLabel.textContent = "Good Runs";
+            gymStatusLabel.style.color = "#295296"; // Blue color
         }
+    }
 
-        function updateStatus(status) {
-            statusLabel.textContent = status;
-            statusLabel.style.color = status === "Checked In" ? "#295296" : "#FF5733"; // Blue for Checked In, Red for Checked Out
-        }
-    </script>
+
+    function updateStatus(status) {
+        statusLabel.textContent = status;
+        statusLabel.style.color = status === "Checked In" ? "#295296" : "#FF5733"; // Blue for Checked In, Red for Checked Out
+    }
+
+    // Haversine formula to calculate distance between two points on the Earth's surface
+    function getDistance(location1, location2) {
+        const R = 6371; // Radius of the Earth in kilometers
+        const lat1 = location1.latitude;
+        const lon1 = location1.longitude;
+        const lat2 = location2.latitude;
+        const lon2 = location2.longitude;
+
+        const dLat = toRadians(lat2 - lat1);
+        const dLon = toRadians(lon2 - lon1);
+
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c; // Distance in kilometers
+
+        return distance * 1000; // Convert to meters
+    }
+
+    // Function to convert degrees to radians
+    function toRadians(degrees) {
+        return degrees * (Math.PI / 180);
+    }
+
+</script>
 </body>
-
 </html>

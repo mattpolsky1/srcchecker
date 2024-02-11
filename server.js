@@ -29,7 +29,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-let totalCheckIns = 5;
+let totalCheckIns = 31;
 let lastCheckInTime = 0;
 
 const checkedInUsers = new Map();
