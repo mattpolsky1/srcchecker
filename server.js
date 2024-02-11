@@ -2,52 +2,31 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const { v4: uuidv4 } = require('uuid'); 
-let isAutoCheckoutInProgress = false;
+const { v4: uuidv4 } = require('uuid');
 const redirectToHTTPS = require('express-http-to-https').redirectToHTTPS;
 
-// Add this before defining routes
-
-
-const uri = "mongodb+srv://mattpolsky:Manning01!@cluster0.ev0u1hj.mongodb.net/CampusHoops?retryWrites=true&w=majority";
-
-const client = new MongoClient(uri, {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    }
-});
-async function run() {
-    try {
-        await client.connect();
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    } finally {
-        // Ensure that the client will close when you finish/error
-        // await client.close();
-    }
-}
-
-const app = express();
-const server = http.createServer(app);
-const io = socketIO(server);
-app.set('trust proxy', true);
-app.use(redirectToHTTPS([/localhost:(\d{4})/], [/\/insecure/], 301));
+let isAutoCheckoutInProgress = false;
 let totalCheckIns = 35;
 let lastCheckInTime = 0;
 
 const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
 
-const publicPath = path.join(__dirname, 'Public');
+const app = express();
+const server = http.createServer(app);
+const io = socketIO(server);
+
+app.set('trust proxy', true);
+app.use(redirectToHTTPS([/localhost:(\d{4})/], [/\/insecure/], 301));
+
 setInterval(() => {
     checkForAutoCheckOut();
 }, 1000);
+
 function generateSessionId() {
     return uuidv4();
 }
+
 function checkForAutoCheckOut() {
     const currentTime = Date.now();
 
@@ -79,6 +58,9 @@ function autoCheckOut(socketId) {
         }, 500);
     }
 }
+
+const publicPath = path.join(__dirname, 'Public');
+
 app.use(express.static(publicPath));
 
 app.get('/', (req, res) => {
@@ -96,7 +78,6 @@ app.post('/beacon', (req, res) => {
     }
     res.sendStatus(200);
 });
-
 
 function updatePeopleCount() {
     const currentTime = Date.now();
@@ -152,22 +133,6 @@ io.on('connection', async (socket) => {
                             io.emit('updateCount', totalCheckIns);
 
                             lastCheckInTimes.set(socket.id, Date.now());
-
-                            const db = client.db('CampusHoops');
-                            const collection = db.collection('Data');
-
-                            const checkInData = {
-                                socketId: socket.id,
-                                checkInTime: new Date(),
-                                userLocation: userLocation
-                            };
-
-                            try {
-                                await collection.insertOne(checkInData);
-                                console.log('Check-in data inserted into MongoDB');
-                            } catch (error) {
-                                console.error('Error inserting check-in data into MongoDB:', error);
-                            }
                         } else {
                             socket.emit('checkInNotAllowed');
                         }
@@ -182,7 +147,7 @@ io.on('connection', async (socket) => {
 
         socket.on('checkOut', () => {
             const socketId = socket.id;
-        
+
             // If the user has checked in before, remove them and decrement the count
             if (checkedInUsers.has(socketId)) {
                 checkedInUsers.delete(socketId);
@@ -190,11 +155,11 @@ io.on('connection', async (socket) => {
                 io.emit('updateCount', totalCheckIns);
             } else {
                 // If the user has not checked in before (maybe due to page refresh), decrement the count anyway
-                checkedInUsers.delete(socketId)
+                checkedInUsers.delete(socketId);
                 totalCheckIns--;
                 io.emit('updateCount', totalCheckIns);
             }
-        
+
             // Remove the 'checkedOutAutomatically' flag from local storage
             socket.emit('removeCheckedOutAutomaticallyFlag');
         });
@@ -202,67 +167,10 @@ io.on('connection', async (socket) => {
         socket.on('requestInitialCount', () => {
             socket.emit('initCount', totalCheckIns);
         });
-
-        async function logDailyCheckIns() {
-            try {
-                const db = client.db('CampusHoops');
-                const collection = db.collection('Data');
-
-                const currentDate = getCurrentDate();
-
-                const dailyCheckIns = await collection.find({
-                    checkInTime: {
-                        $gte: currentDate,
-                        $lt: new Date(currentDate.getTime() + 24 * 60 * 60 * 1000)
-                    }
-                }).toArray();
-
-                console.log('Number of check-ins today:', dailyCheckIns.length);
-                io.emit('dailyCheckIns', { date: currentDate, count: dailyCheckIns.length });
-            } catch (error) {
-                console.error('Error logging daily check-ins:', error);
-            }
-        }
-
-        async function logHourlyCheckIns() {
-            try {
-                const db = client.db('CampusHoops');
-                const collection = db.collection('Data');
-
-                const currentHour = getCurrentHour();
-
-                if (currentHour >= 8 && currentHour <= 20) {
-                    const hourlyCheckIns = await collection.find({
-                        checkInTime: {
-                            $gte: new Date().setHours(8, 0, 0),
-                            $lt: new Date().setHours(21, 0, 0)
-                        }
-                    }).toArray();
-
-                    console.log('Number of check-ins this hour:', hourlyCheckIns.length);
-                    io.emit('hourlyCheckIns', { hour: currentHour, count: hourlyCheckIns.length });
-                }
-            } catch (error) {
-                console.error('Error logging hourly check-ins:', error);
-            }
-        }
-
-        logDailyCheckIns();
-        logHourlyCheckIns();
     } catch (error) {
         console.error('Error in socket connection:', error);
     }
 });
-
-function getCurrentDate() {
-    const now = new Date();
-    const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return currentDate;
-}
-
-function getCurrentHour() {
-    return new Date().getHours();
-}
 
 function getDistance(location1, location2) {
     const R = 6371;
