@@ -136,6 +136,38 @@
     <script src="/socket.io/socket.io.js"></script>
 <script>
 
+function initMap() {
+            // Create a map centered at a default location
+            var map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 0, lng: 0 },
+                zoom: 8
+            });
+
+            // Try HTML5 geolocation
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    // Update the map center to the user's location
+                    var userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    map.setCenter(userLocation);
+
+                    // Add a marker to the map at the user's location
+                    var marker = new google.maps.Marker({
+                        position: userLocation,
+                        map: map,
+                        title: 'Your Location'
+                    });
+                }, function () {
+                    // Handle error if user denies location access
+                    console.log('Error: The Geolocation service failed.');
+                });
+            } else {
+                // Browser doesn't support Geolocation
+                console.log('Error: Your browser doesn\'t support geolocation.');
+            }
+        }
 
 let isRefreshing = false;
 
