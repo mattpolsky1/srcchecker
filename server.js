@@ -1,8 +1,8 @@
 const express = require('express');
-const http = require('http');
+const enforce = require('express-enforces-ssl');
 const socketIO = require('socket.io');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid'); 
+const { v4: uuidv4 } = require('uuid');
 
 let isAutoCheckoutInProgress = false;
 let totalCheckIns = 31;
@@ -12,7 +12,13 @@ const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
 
 const app = express();
-const server = http.createServer(app);
+
+// Enforce HTTPS in production environment
+if (process.env.NODE_ENV === 'production') {
+    app.use(enforce.HTTPS({ trustProtoHeader: true }));
+}
+
+const server = require('http').createServer(app);
 const io = socketIO(server);
 
 const publicPath = path.join(__dirname, 'Public');
