@@ -84,12 +84,6 @@ function updatePeopleCount() {
     const currentTimeInET = new Date(currentTime - 5 * 60 * 60 * 1000);
     const resetTimeInET = new Date(currentTimeInET);
     resetTimeInET.setHours(20, 0, 0, 0);
-
-    if (currentTimeInET >= resetTimeInET) {
-        totalCheckIns = 0;
-    }
-
-    lastCheckInTime = currentTime;
 }
 
 io.on('connection', async (socket) => {
@@ -196,7 +190,7 @@ function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 4000;
 
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
