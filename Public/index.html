@@ -124,7 +124,7 @@
 <body>
 <h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
 <div id="status">Status: <span id="statusLabel">Checked Out</span></div>
-<div id="gymStatus">Gym Status: <span id="gymStatusLabel">Good Runs</span></div>
+<div id="gymStatus">Gym Status: <span id="gymStatusLabel">Empty</span></div>
 <button id="toggleCheckInButton" class="checkIn">Check In</button>
 <div id="logo">
     <img id="myImage" src="https://i.ibb.co/gPhHQ7f/campushoopslogo-02.png" alt="campushoopslogo-02">
@@ -386,11 +386,10 @@ socket.on('initCount', (count) => {
             gymStatusLabel.textContent = "Packed";
             gymStatusLabel.style.color = "#FF5733"; // Red color
         } else {
-            gymStatusLabel.textContent = "Good Runs";
+            gymStatusLabel.textContent = "Empty";
             gymStatusLabel.style.color = "#295296"; // Blue color
         }
     }
-
 
     function updateStatus(status) {
         statusLabel.textContent = status;
