@@ -198,7 +198,7 @@ if ('serviceWorker' in navigator && 'SyncManager' in window) {
             if (checkInTimestamp) {
                 const currentTime = Date.now();
                 const timeElapsed = currentTime - parseInt(checkInTimestamp, 10);
-                const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
+                const remainingTime = 5400000 - timeElapsed; // 90 minutes - time elapsed
                 if (remainingTime > 0) {
                     checkedIn = true;
                     setTimeout(autoCheckOut, remainingTime);
@@ -230,7 +230,7 @@ if ('serviceWorker' in navigator && 'SyncManager' in window) {
 
                 const currentTime = Date.now();
                 const timeElapsed = currentTime - parseInt(timestamp, 10);
-                const remainingTime = 30000 - timeElapsed; // 30 seconds - time elapsed
+                const remainingTime = 5400000 - timeElapsed; // 90 minutes - time elapsed
 
                 if (remainingTime > 0) {
                     setTimeout(autoCheckOut, remainingTime);
@@ -274,7 +274,7 @@ socket.on('hourlyCheckIns', (data) => {
         updateStatus("Checked In");
         toggleButtonVisibility(); // Hide the button
         // Set a timer to automatically check out after 30 seconds
-        setTimeout(autoCheckOut, 30000); // 30 seconds
+        setTimeout(autoCheckOut, 5400000); // 30 seconds
     }
 
 let checkInButtonVisible = true; // Track the visibility of the button
@@ -334,7 +334,7 @@ toggleCheckInButton.addEventListener("click", () => {
                 const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                 const distance = getDistance({ latitude: userLatitude, longitude: userLongitude }, targetLocation);
 
-                if (distance <= 10000) { // Within 10 miles
+                if (distance <= 804) { // Within 0.5 Miles
                     checkedIn = true;
                     Cookies.set("checkInStatus", "checkedIn");
                     updateStatus("Checked In");
@@ -344,7 +344,7 @@ toggleCheckInButton.addEventListener("click", () => {
                     setCheckInStatusInCookie("checkedIn", currentTime);
 
                     // Set a timer to automatically check out after 30 seconds
-                    setTimeout(autoCheckOut, 30000); // 30 seconds
+                    setTimeout(autoCheckOut, 5400000); // 30 seconds
 
                     socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
                 } else {
@@ -369,11 +369,11 @@ socket.on('initCount', (count) => {
     });
 
     socket.on('checkInNotAllowed', () => {
-        alert('You are not within 10 miles of the specified location. Check-in not allowed.');
+        alert('You are not within 0.5 miles of the specified location. Check-in not allowed.');
     });
 
     socket.on('checkedOutAutomatically', () => {
-        alert('You have been checked out automatically after 30 seconds of inactivity.');
+        alert('You have been checked out automatically after 90 minutes of inactivity.');
         checkedIn = false;
         Cookies.remove("checkInStatus");
         updateStatus("Checked Out");

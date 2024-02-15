@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const redirectToHTTPS = require('express-http-to-https').redirectToHTTPS;
 
 let isAutoCheckoutInProgress = false;
-let totalCheckIns = 35;
+let totalCheckIns = 0;
 let lastCheckInTime = 0;
 
 const checkedInUsers = new Map();
@@ -33,7 +33,7 @@ function checkForAutoCheckOut() {
     for (const [socketId, lastCheckInTime] of lastCheckInTimes) {
         const timeSinceLastCheckIn = currentTime - lastCheckInTime;
 
-        if (timeSinceLastCheckIn > 40000 && checkedInUsers.has(socketId)) {
+        if (timeSinceLastCheckIn > 5400000 && checkedInUsers.has(socketId)) {
             autoCheckOut(socketId);
         }
     }
@@ -111,8 +111,8 @@ io.on('connection', async (socket) => {
                         const lastCheckInTime = lastCheckInTimes.get(socket.id);
                         const timeSinceLastCheckIn = currentTime - lastCheckInTime;
 
-                        if (timeSinceLastCheckIn < 30000) {
-                            socket.emit('checkInCooldown', 30000 - timeSinceLastCheckIn);
+                        if (timeSinceLastCheckIn < 5400000) {
+                            socket.emit('checkInCooldown', 5400000 - timeSinceLastCheckIn);
                             return;
                         }
                     }
@@ -121,7 +121,7 @@ io.on('connection', async (socket) => {
                         const targetLocation = { latitude: 35.90927, longitude: -79.04746 };
                         const distance = getDistance(userLocation, targetLocation);
 
-                        if (distance <= 10000) {
+                        if (distance <= 804) {
                             checkedInUsers.set(socket.id, true);
                             totalCheckIns++;
                             io.emit('updateCount', totalCheckIns);
