@@ -348,7 +348,8 @@ toggleCheckInButton.addEventListener("click", () => {
 
                     socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
                 } else {
-                    alert("You are not within 10 miles of the specified location. Check-in not allowed.");
+                    alert("You are not at Rams. Check-In not allowed");
+                    checkedIn = false
                 }
             }, (error) => {
                 console.error('Error getting user location:', error);
