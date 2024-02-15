@@ -386,7 +386,7 @@ socket.on('initCount', (count) => {
     
     if (count >= 0 && count <= 10) {
         gymStatusLabel.textContent = "Empty";
-        gymStatusLabel.style.color = "#00FF00"; // Green color
+        gymStatusLabel.style.color = "#AFE1AF	"; // Green color
     } else if (count >= 11 && count <= 30) {
         gymStatusLabel.textContent = "Good Runs";
         gymStatusLabel.style.color = "#295296"; // Blue color
@@ -395,8 +395,6 @@ socket.on('initCount', (count) => {
         gymStatusLabel.style.color = "#FF5733"; // Red color
     }
 }
-
-
 
     function updateStatus(status) {
         statusLabel.textContent = status;
