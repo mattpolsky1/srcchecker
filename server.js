@@ -44,7 +44,7 @@ function updateTotalCheckIns() {
     if (currentHour >= 9 && currentHour <= 12) {
       totalCheckIns = Math.floor(Math.random() * 5) + 1;
     } else if (currentHour > 12 && currentHour <= 17) {
-      totalCheckIns = Math.floor(Math.random() * 8) + 3;
+      totalCheckIns = Math.floor(Math.random() * 7) + 2;
     } else if (currentHour > 17 && currentHour <= 23) {
       totalCheckIns = Math.floor(Math.random() * 11) + 10;
     }
@@ -53,7 +53,7 @@ function updateTotalCheckIns() {
   }
 
   updateTotalCheckIns();
-  
+
 function autoCheckOut(socketId) {
     if (!isAutoCheckoutInProgress && checkedInUsers.has(socketId)) {
         isAutoCheckoutInProgress = true;
