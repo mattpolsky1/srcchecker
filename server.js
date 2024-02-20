@@ -7,7 +7,6 @@ const redirectToHTTPS = require('express-http-to-https').redirectToHTTPS;
 
 let isAutoCheckoutInProgress = false;
 let totalCheckIns = 1;
-let lastCheckInTime = 0;
 
 const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
@@ -43,11 +42,19 @@ function updateTotalCheckIns() {
   
     if (currentHour >= 9 && currentHour <= 12) {
       totalCheckIns = Math.floor(Math.random() * 5) + 1;
-    } else if (currentHour > 12 && currentHour <= 17) {
-      totalCheckIns = Math.floor(Math.random() * 7) + 2;
-    } else if (currentHour > 17 && currentHour <= 23) {
-      totalCheckIns = Math.floor(Math.random() * 11) + 10;
+    } else if (currentHour > 12 && currentHour <= 15) {
+      totalCheckIns = Math.floor(Math.random() * 10) + 1;
+    } else if (currentHour > 15 && currentHour <= 18) {
+      totalCheckIns = Math.floor(Math.random() * 10) + 5;
+    } else if (currentHour > 18 && currentHour <= 21) {
+        totalCheckIns = Math.floor(Math.random() * 15) + 10;
+    } else if (currentHour > 21 && currentHour <= 24) {
+        totalCheckIns = Math.floor(Math.random() * 10) + 5;
+    } else if (currentHour < 9) {
+        totalCheckIns = 0;
     }
+
+
   
     // Additional logic for individual check-ins if needed
   }
