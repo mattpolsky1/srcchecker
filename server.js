@@ -61,6 +61,8 @@ function updateTotalCheckIns() {
 
   updateTotalCheckIns();
 
+  setInterval(updateTotalCheckIns, 60000);
+
 function autoCheckOut(socketId) {
     if (!isAutoCheckoutInProgress && checkedInUsers.has(socketId)) {
         isAutoCheckoutInProgress = true;
