@@ -38,7 +38,7 @@ function checkForAutoCheckOut() {
     }
 }
 function updateTotalCheckIns() {
-    const currentHour = new Date().getHours();
+    const currentHour = new Date().toLocaleString('en-US', { hour12: false, hour: 'numeric', timeZone: 'YourTimeZone' });
 
     if (currentHour >= 9 && currentHour <= 12) {
         totalCheckIns = Math.floor(Math.random() * 5) + 1;
@@ -58,6 +58,10 @@ function updateTotalCheckIns() {
 }
 
 updateTotalCheckIns();
+
+// Set interval to update every 3 hours (3 * 60 * 60 * 1000 milliseconds)
+setInterval(updateTotalCheckIns, 3 * 60 * 60 * 1000);
+
 
 // Set interval to update every 3 hours (3 * 60 * 60 * 1000 milliseconds)
 setInterval(updateTotalCheckIns, 3 * 60 * 60 * 1000);
