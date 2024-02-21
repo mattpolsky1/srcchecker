@@ -51,7 +51,7 @@ function updateTotalCheckIns() {
     } else if (currentHour > 21 && currentHour <= 24) {
         totalCheckIns = Math.floor(Math.random() * 10) + 5;
     } else if (currentHour < 9) {
-        totalCheckIns = 0;
+        totalCheckIns = 5;
     }
 
     // Additional logic for individual check-ins if needed
