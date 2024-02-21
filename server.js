@@ -38,34 +38,28 @@ function checkForAutoCheckOut() {
     }
 }
 function updateTotalCheckIns() {
-    const currentHour = new Date().toLocaleString('en-US', { hour12: false, hour: 'numeric', timeZone: 'YourTimeZone' });
-
+    const currentHour = new Date().getHours();
+  
     if (currentHour >= 9 && currentHour <= 12) {
-        totalCheckIns = Math.floor(Math.random() * 5) + 1;
+      totalCheckIns = Math.floor(Math.random() * 5) + 1;
     } else if (currentHour > 12 && currentHour <= 15) {
-        totalCheckIns = Math.floor(Math.random() * 10) + 1;
+      totalCheckIns = Math.floor(Math.random() * 10) + 1;
     } else if (currentHour > 15 && currentHour <= 18) {
-        totalCheckIns = Math.floor(Math.random() * 10) + 5;
+      totalCheckIns = Math.floor(Math.random() * 10) + 5;
     } else if (currentHour > 18 && currentHour <= 21) {
         totalCheckIns = Math.floor(Math.random() * 15) + 10;
     } else if (currentHour > 21 && currentHour <= 24) {
         totalCheckIns = Math.floor(Math.random() * 10) + 5;
     } else if (currentHour < 9) {
-        totalCheckIns = 5;
+        totalCheckIns = 0;
     }
 
+
+  
     // Additional logic for individual check-ins if needed
-}
+  }
 
-updateTotalCheckIns();
-
-// Set interval to update every 3 hours (3 * 60 * 60 * 1000 milliseconds)
-setInterval(updateTotalCheckIns, 3 * 60 * 60 * 1000);
-
-
-// Set interval to update every 3 hours (3 * 60 * 60 * 1000 milliseconds)
-setInterval(updateTotalCheckIns, 3 * 60 * 60 * 1000);
-
+  updateTotalCheckIns();
 
 function autoCheckOut(socketId) {
     if (!isAutoCheckoutInProgress && checkedInUsers.has(socketId)) {
