@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const redirectToHTTPS = require('express-http-to-https').redirectToHTTPS;
 
 let isAutoCheckoutInProgress = false;
-let totalCheckIns = 1;
+let totalCheckIns = 20;
 
 const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
@@ -37,29 +37,7 @@ function checkForAutoCheckOut() {
         }
     }
 }
-function updateTotalCheckIns() {
-    const currentHour = new Date().getHours();
-  
-    if (currentHour >= 9 && currentHour <= 12) {
-      totalCheckIns = Math.floor(Math.random() * 5) + 1;
-    } else if (currentHour > 12 && currentHour <= 15) {
-      totalCheckIns = Math.floor(Math.random() * 10) + 1;
-    } else if (currentHour > 15 && currentHour <= 18) {
-      totalCheckIns = Math.floor(Math.random() * 10) + 5;
-    } else if (currentHour > 18 && currentHour <= 21) {
-        totalCheckIns = Math.floor(Math.random() * 15) + 10;
-    } else if (currentHour > 21 && currentHour <= 24) {
-        totalCheckIns = Math.floor(Math.random() * 10) + 5;
-    } else if (currentHour < 9) {
-        totalCheckIns = 0;
-    }
 
-
-  
-    // Additional logic for individual check-ins if needed
-  }
-
-  updateTotalCheckIns();
 
 function autoCheckOut(socketId) {
     if (!isAutoCheckoutInProgress && checkedInUsers.has(socketId)) {
@@ -212,7 +190,7 @@ function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4003;
 
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
