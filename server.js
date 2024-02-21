@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const redirectToHTTPS = require('express-http-to-https').redirectToHTTPS;
 
 let isAutoCheckoutInProgress = false;
-let totalCheckIns = 3;
+let totalCheckIns = 9;
 let lastCheckInTime = 0;
 
 const checkedInUsers = new Map();
