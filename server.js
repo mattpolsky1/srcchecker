@@ -6,7 +6,8 @@ const { v4: uuidv4 } = require('uuid');
 const redirectToHTTPS = require('express-http-to-https').redirectToHTTPS;
 
 let isAutoCheckoutInProgress = false;
-let totalCheckIns = 20;
+let totalCheckIns = 1;
+let lastCheckInTime = 0;
 
 const checkedInUsers = new Map();
 const lastCheckInTimes = new Map();
@@ -37,13 +38,6 @@ function checkForAutoCheckOut() {
         }
     }
 }
-
-
-updateTotalCheckIns();
-
-// Set interval to update every 3 hours (3 * 60 * 60 * 1000 milliseconds)
-setInterval(updateTotalCheckIns, 3 * 60 * 60 * 1000);
-
 
 function autoCheckOut(socketId) {
     if (!isAutoCheckoutInProgress && checkedInUsers.has(socketId)) {
@@ -196,7 +190,7 @@ function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
 
-const PORT = process.env.PORT || 4003;
+const PORT = process.env.PORT || 4000;
 
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
