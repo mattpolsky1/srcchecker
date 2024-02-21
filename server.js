@@ -37,28 +37,7 @@ function checkForAutoCheckOut() {
         }
     }
 }
-function updateTotalCheckIns() {
-    const currentHour = new Date().getHours();
 
-    if (currentHour >= 9 && currentHour < 12) {
-        totalCheckIns = Math.floor(Math.random() * 5) + 1;
-    } else if (currentHour >= 12 && currentHour < 15) {
-        totalCheckIns = Math.floor(Math.random() * 10) + 1;
-    } else if (currentHour >= 15 && currentHour < 18) {
-        totalCheckIns = Math.floor(Math.random() * 9) + 7; // 7-15 range
-    } else if (currentHour >= 18 && currentHour < 21) {
-        totalCheckIns = Math.floor(Math.random() * 11) + 15; // 15-25 range
-    } else if (currentHour >= 21 && currentHour <= 24) {
-        totalCheckIns = Math.floor(Math.random() * 6) + 10; // 10-15 range
-    } else if (currentHour >= 0 && currentHour < 9) {
-        totalCheckIns = 0;
-    }
-
-    console.log("Current Hour:", currentHour);
-    console.log("Total Check-Ins:", totalCheckIns);
-
-    // Additional logic for individual check-ins if needed
-}
 
 updateTotalCheckIns();
 
