@@ -190,7 +190,7 @@ function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4002;
 
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

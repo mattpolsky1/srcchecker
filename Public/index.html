@@ -169,7 +169,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const courtSchedules = {
+const courtSchedules = {
             court1: ["4-5", "10-11"],
             court2: ["4-5", "10-11"],
             court3: ["4-5", "10-11"],
@@ -187,30 +187,35 @@
 
         // Function to update court availability status
         function updateCourtAvailability() {
-    const currentTime = new Date();
-    let courtsOpen = 2;
-
-    // Display availability status for each court
-    Object.keys(courtSchedules).forEach(court => {
-        const schedule = courtSchedules[court];
-        const isOpen = schedule.some(timeRange => {
-            const [start, end] = timeRange.split('-').map(Number);
+            const currentTime = new Date();
             const currentHour = currentTime.getHours();
-            return currentHour >= start && currentHour < end;
-        });
+            let courtsOpen = 0;
 
-        // Update availability status for each court
-        const courtElement = document.getElementById(`court${court}`);
-        courtElement.innerText = `${court}: ${isOpen ? 'Open' : 'Closed'}`;
+            // Display availability status for each court
+            Object.keys(courtSchedules).forEach(court => {
+                const schedule = courtSchedules[court];
+                const isOpen = schedule.some(timeRange => {
+                    const [start, end] = timeRange.split('-').map(Number);
+                    return currentHour >= start && currentHour < end;
+                });
 
-        if (isOpen) {
-            courtsOpen++;
+                // Update availability status for each court
+                const courtElement = document.getElementById(`court${court}`);
+                courtElement.innerText = `${court}: ${isOpen ? 'Open' : 'Closed'}`;
+
+                if (isOpen) {
+                    courtsOpen++;
+                }
+            });
+
+            // Log current hour and status of each court to console for debugging
+            console.log(`Current Hour: ${currentHour}`);
+            console.log('Court Status:', courtSchedules);
+            console.log('Courts Open:', courtsOpen);
+
+            // Update total courts available
+            document.getElementById('courtsStatusLabel').innerText = courtsOpen;
         }
-    });
-
-    // Update total courts available
-    document.getElementById('courtsStatusLabel').innerText = courtsOpen;
-}
 
         // Display court schedules in the top left
         function displayCourtSchedules() {
