@@ -542,6 +542,9 @@ socket.on('initCount', (count) => {
         return degrees * (Math.PI / 180);
     }
 
+    function getRandomNumber(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
     // Function to update the number of people at the gym
 function updatePeopleAtGym(courtsOpen) {
     let minPeople, maxPeople;
