@@ -2,14 +2,13 @@
 <html>
 <head>
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-L45Z9JYDS2"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-L45Z9JYDS2');
-</script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L45Z9JYDS2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-L45Z9JYDS2');
+    </script>
     <title>Gym Attendance</title>
     <style>
         body {
@@ -126,31 +125,44 @@
                 font-size: 30px; /* Adjusted font size */
             }
         }
+
+        /* Additional styles for court schedules */
+        #courtSchedules {
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        #courtSchedules h3 {
+            font-size: 24px;
+            color: #295296;
+        }
+
+        #courtSchedules p {
+            font-size: 18px;
+            color: #5b5857;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
-<h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
-<div id="status">Status: <span id="statusLabel">Checked Out</span></div>
-<div id="gymStatus">Gym Status: <span id="gymStatusLabel">Good Runs</span></div>
-<button id="toggleCheckInButton" class="checkIn">Check In</button>
-<div id="courtsAvailable">Courts available: <span id="courtsStatusLabel">0</span></div>
-<div id="courtSchedules" style="text-align: left; margin-top: 20px;">
-    <div id="court1"></div>
-    <div id="court2"></div>
-    <div id="court3"></div>
-    <div id="court4"></div>
-    <div id="court5"></div>
-    <div id="court6"></div>
-</div>
-<div id="logo">
-    <img id="myImage" src="https://i.ibb.co/gPhHQ7f/campushoopslogo-02.png" alt="campushoopslogo-02">
-</div>
+    <h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
+    <div id="status">Status: <span id="statusLabel">Checked Out</span></div>
+    <div id="gymStatus">Gym Status: <span id="gymStatusLabel">Good Runs</span></div>
+    <button id="toggleCheckInButton" class="checkIn">Check In</button>
+    <div id="courtsAvailable">Courts available: <span id="courtsStatusLabel">0</span></div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry&callback=initMap"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
-<script src="/socket.io/socket.io.js"></script>
-<script>
- const courtSchedules = {
+    <!-- Display availability status for each court -->
+    <div id="courtSchedules"></div>
+
+    <div id="logo">
+        <img id="myImage" src="https://i.ibb.co/gPhHQ7f/campushoopslogo-02.png" alt="campushoopslogo-02">
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry&callback=initMap"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const courtSchedules = {
             court1: ["4-5", "10-11"],
             court2: ["4-5", "10-11"],
             court3: ["4-5", "10-11"],
@@ -158,6 +170,13 @@
             court5: ["4-11"],
             court6: ["4-11"]
         };
+
+        // Create court div elements dynamically
+        Object.keys(courtSchedules).forEach(court => {
+            const courtDiv = document.createElement('div');
+            courtDiv.id = `court${court}`;
+            document.getElementById('courtSchedules').appendChild(courtDiv);
+        });
 
         // Function to update court availability status
         function updateCourtAvailability() {
@@ -207,6 +226,10 @@
             updateCourtAvailability();
             displayCourtSchedules();
         }, 60000);
+    </script>
+</body>
+</html>
+
 
 let isRefreshing = false;
 
