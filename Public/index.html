@@ -174,8 +174,8 @@ const courtSchedules = {
             court2: ["4-5", "10-11"],
             court3: ["4-5", "10-11"],
             court4: ["4-5", "10-11"],
-            court5: ["4-11"],
-            court6: ["4-11"]
+            court5: ["2-11"],
+            court6: ["1-11"]
         };
 
         // Create court div elements dynamically
@@ -541,6 +541,63 @@ socket.on('initCount', (count) => {
     function toRadians(degrees) {
         return degrees * (Math.PI / 180);
     }
+
+    // Function to update the number of people at the gym
+function updatePeopleAtGym(courtsOpen) {
+    let minPeople, maxPeople;
+
+    // Set min and max based on the number of courts available
+    switch (courtsOpen) {
+        case 1:
+            minPeople = 3;
+            maxPeople = 6;
+            break;
+        case 2:
+            minPeople = 5;
+            maxPeople = 12;
+            break;
+        case 3:
+            minPeople = 8;
+            maxPeople = 15;
+            break;
+        case 4:
+            minPeople = 12;
+            maxPeople = 20;
+            break;
+        case 5:
+            minPeople = 15;
+            maxPeople = 20;
+            break;
+        case 6:
+            minPeople = 15;
+            maxPeople = 20;
+            break;
+        default:
+            minPeople = 0;
+            maxPeople = 0;
+    }
+
+    // Use the totalCheckIns variable if it's available, otherwise randomize
+    const peopleAtGym = typeof totalCheckIns !== 'undefined' ? totalCheckIns : getRandomNumber(minPeople, maxPeople);
+
+    // Update the displayed number
+    document.getElementById('peopleAtGym').innerText = peopleAtGym;
+}
+
+// Initial update
+updatePeopleAtGym(1); // Assuming 1 court is available initially
+
+// Update every 2 hours
+setInterval(() => {
+    const courtsAvailable = parseInt(document.getElementById('courtsStatusLabel').innerText, 10);
+    if (courtsAvailable === 0) {
+        // If no courts available, set people at gym to 0
+        updatePeopleAtGym(0);
+    } else {
+        // Otherwise, update based on the number of available courts
+        updatePeopleAtGym(courtsAvailable);
+    }
+}, 2 * 60 * 60 * 1000); // 2 hours in milliseconds
 
 </script>
 </body>
