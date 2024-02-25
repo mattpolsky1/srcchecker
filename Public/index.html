@@ -580,7 +580,7 @@ socket.on('initCount', (count) => {
     }
 
     // Randomize the totalCheckIns variable
-    const totalCheckIns = getRandomNumber(minPeople, maxPeople);
+    count = getRandomNumber(minPeople, maxPeople);
 
     // Update the displayed number
     document.getElementById('peopleAtGym').innerText = totalCheckIns;
