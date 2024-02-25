@@ -229,13 +229,14 @@ function updateCourtAvailability() {
     schedulesElement.innerHTML = "<h3>Court Schedules:</h3>";
 
     Object.keys(courtSchedules).forEach(court => {
+        const courtNumber = court.charAt(court.length - 1); // Extract the court number
         const schedule = courtSchedules[court];
         const openTimes = schedule.map(timeRange => {
             const [start, end] = timeRange.split('-');
             return `${start}-${end}`;
         });
 
-        const scheduleText = `${court} Open From: ${openTimes.join(', ')}`;
+        const scheduleText = `Court ${courtNumber} Open From: ${openTimes.join(', ')}`;
         schedulesElement.innerHTML += `<p>${scheduleText}</p>`;
     });
 }
