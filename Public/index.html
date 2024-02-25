@@ -187,30 +187,30 @@
 
         // Function to update court availability status
         function updateCourtAvailability() {
-            const currentTime = new Date();
+    const currentTime = new Date();
+    let courtsOpen = 0;
+
+    // Display availability status for each court
+    Object.keys(courtSchedules).forEach(court => {
+        const schedule = courtSchedules[court];
+        const isOpen = schedule.some(timeRange => {
+            const [start, end] = timeRange.split('-').map(Number);
             const currentHour = currentTime.getHours();
-            let courtsOpen = 0;
+            return currentHour >= start && currentHour < end;
+        });
 
-            // Display availability status for each court
-            Object.keys(courtSchedules).forEach(court => {
-                const schedule = courtSchedules[court];
-                const isOpen = schedule.some(timeRange => {
-                    const [start, end] = timeRange.split('-').map(Number);
-                    return currentHour >= start && currentHour < end;
-                });
+        // Update availability status for each court
+        const courtElement = document.getElementById(`court${court}`);
+        courtElement.innerText = `${court}: ${isOpen ? 'Open' : 'Closed'}`;
 
-                // Update availability status for each court
-                const courtElement = document.getElementById(`court${court}`);
-                courtElement.innerText = `${court}: ${isOpen ? 'Open' : 'Closed'}`;
-
-                if (isOpen) {
-                    courtsOpen++;
-                }
-            });
-
-            // Update total courts available
-            document.getElementById('courtsStatusLabel').innerText = courtsOpen;
+        if (isOpen) {
+            courtsOpen++;
         }
+    });
+
+    // Update total courts available
+    document.getElementById('courtsStatusLabel').innerText = courtsOpen;
+}
 
         // Display court schedules in the top left
         function displayCourtSchedules() {
