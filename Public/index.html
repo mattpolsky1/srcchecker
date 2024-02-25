@@ -545,8 +545,7 @@ socket.on('initCount', (count) => {
     function getRandomNumber(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
-    // Function to update the number of people at the gym
-function updatePeopleAtGym(courtsOpen) {
+ function updatePeopleAtGym(courtsOpen) {
     let minPeople, maxPeople;
 
     // Set min and max based on the number of courts available
@@ -580,11 +579,11 @@ function updatePeopleAtGym(courtsOpen) {
             maxPeople = 0;
     }
 
-    // Use the totalCheckIns variable if it's available, otherwise randomize
-    const peopleAtGym = typeof totalCheckIns !== 'undefined' ? totalCheckIns : getRandomNumber(minPeople, maxPeople);
+    // Randomize the totalCheckIns variable
+    const totalCheckIns = getRandomNumber(minPeople, maxPeople);
 
     // Update the displayed number
-    document.getElementById('peopleAtGym').innerText = peopleAtGym;
+    document.getElementById('peopleAtGym').innerText = totalCheckIns;
 }
 
 // Initial update
