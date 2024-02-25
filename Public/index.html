@@ -32,6 +32,13 @@
             color: #295296;
         }
 
+        #courtsAvailable {
+            font-size: 36px; /* Adjust font size as needed */
+            font-weight: bold;
+            color: #295296;
+            margin-top: 20px;
+        }
+
         #peopleAtGym {
             font-size: 100px; /* Larger font size */
             font-weight: bold;
@@ -126,6 +133,15 @@
 <div id="status">Status: <span id="statusLabel">Checked Out</span></div>
 <div id="gymStatus">Gym Status: <span id="gymStatusLabel">Good Runs</span></div>
 <button id="toggleCheckInButton" class="checkIn">Check In</button>
+<div id="courtsAvailable">Courts available: <span id="courtsStatusLabel">0</span></div>
+<div id="courtSchedules" style="text-align: left; margin-top: 20px;">
+    <div id="court1"></div>
+    <div id="court2"></div>
+    <div id="court3"></div>
+    <div id="court4"></div>
+    <div id="court5"></div>
+    <div id="court6"></div>
+</div>
 <div id="logo">
     <img id="myImage" src="https://i.ibb.co/gPhHQ7f/campushoopslogo-02.png" alt="campushoopslogo-02">
 </div>
@@ -134,7 +150,63 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
+ const courtSchedules = {
+            court1: ["4-5", "10-11"],
+            court2: ["4-5", "10-11"],
+            court3: ["4-5", "10-11"],
+            court4: ["4-5", "10-11"],
+            court5: ["4-11"],
+            court6: ["4-11"]
+        };
 
+        // Function to update court availability status
+        function updateCourtAvailability() {
+            const currentTime = new Date();
+            const currentHour = currentTime.getHours();
+            let courtsOpen = 0;
+
+            // Display availability status for each court
+            Object.keys(courtSchedules).forEach(court => {
+                const schedule = courtSchedules[court];
+                const isOpen = schedule.some(timeRange => {
+                    const [start, end] = timeRange.split('-').map(Number);
+                    return currentHour >= start && currentHour < end;
+                });
+
+                // Update availability status for each court
+                const courtElement = document.getElementById(`court${court}`);
+                courtElement.innerText = `${court}: ${isOpen ? 'Open' : 'Closed'}`;
+
+                if (isOpen) {
+                    courtsOpen++;
+                }
+            });
+
+            // Update total courts available
+            document.getElementById('courtsStatusLabel').innerText = courtsOpen;
+        }
+
+        // Display court schedules in the top left
+        function displayCourtSchedules() {
+            const schedulesElement = document.getElementById('courtSchedules');
+            schedulesElement.innerHTML = "<h3>Court Schedules:</h3>";
+
+            Object.keys(courtSchedules).forEach(court => {
+                const schedule = courtSchedules[court];
+                const scheduleText = `${court}: ${schedule.join(', ')}`;
+                schedulesElement.innerHTML += `<p>${scheduleText}</p>`;
+            });
+        }
+
+        // Call the functions initially
+        updateCourtAvailability();
+        displayCourtSchedules();
+
+        // Update every minute
+        setInterval(() => {
+            updateCourtAvailability();
+            displayCourtSchedules();
+        }, 60000);
 
 let isRefreshing = false;
 
