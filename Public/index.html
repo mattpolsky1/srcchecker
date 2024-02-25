@@ -541,11 +541,13 @@ socket.on('initCount', (count) => {
     function toRadians(degrees) {
         return degrees * (Math.PI / 180);
     }
+// Function to generate a random number within a given range
+function getRandomNumber(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
-    function getRandomNumber(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
- function updatePeopleAtGym(courtsOpen) {
+// Function to update the number of people at the gym
+function updatePeopleAtGym(courtsOpen, randomCount) {
     let minPeople, maxPeople;
 
     // Set min and max based on the number of courts available
@@ -579,11 +581,11 @@ socket.on('initCount', (count) => {
             maxPeople = 0;
     }
 
-    // Randomize the totalCheckIns variable
-    count = getRandomNumber(minPeople, maxPeople);
+    // Use the randomCount if available, otherwise randomize
+    const peopleAtGym = typeof randomCount !== 'undefined' ? randomCount : getRandomNumber(minPeople, maxPeople);
 
     // Update the displayed number
-    document.getElementById('peopleAtGym').innerText = totalCheckIns;
+    document.getElementById('peopleAtGym').innerText = peopleAtGym;
 }
 
 // Initial update
@@ -592,12 +594,18 @@ updatePeopleAtGym(); // Assuming 1 court is available initially
 // Update every 2 hours
 setInterval(() => {
     const courtsAvailable = parseInt(document.getElementById('courtsStatusLabel').innerText, 10);
+
     if (courtsAvailable === 0) {
-        // If no courts available, set people at gym to 0
+        // If no courts available, set people at the gym to 0
         updatePeopleAtGym(0);
     } else {
-        // Otherwise, update based on the number of available courts
-        updatePeopleAtGym(courtsAvailable);
+        // Otherwise, generate a new random count based on the number of available courts
+        const minPeople = 3; // Set your desired default values
+        const maxPeople = 6;
+        const newRandomCount = getRandomNumber(minPeople, maxPeople);
+
+        // Update the displayed number
+        updatePeopleAtGym(courtsAvailable, newRandomCount);
     }
 }, 2 * 60 * 60 * 1000); // 2 hours in milliseconds
 
