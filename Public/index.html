@@ -174,8 +174,8 @@ const courtSchedules = {
             court2: ["4-5", "10-11"],
             court3: ["4-5", "10-11"],
             court4: ["4-5", "10-11"],
-            court5: ["1-11"],
-            court6: ["2-11"]
+            court5: ["4-11"],
+            court6: ["4-11"]
         };
 
         // Create court div elements dynamically
@@ -225,15 +225,20 @@ function updateCourtAvailability() {
 
         // Display court schedules in the top left
         function displayCourtSchedules() {
-            const schedulesElement = document.getElementById('courtSchedules');
-            schedulesElement.innerHTML = "<h3>Court Schedules:</h3>";
+    const schedulesElement = document.getElementById('courtSchedules');
+    schedulesElement.innerHTML = "<h3>Court Schedules:</h3>";
 
-            Object.keys(courtSchedules).forEach(court => {
-                const schedule = courtSchedules[court];
-                const scheduleText = `${court}: ${schedule.join(', ')}`;
-                schedulesElement.innerHTML += `<p>${scheduleText}</p>`;
-            });
-        }
+    Object.keys(courtSchedules).forEach(court => {
+        const schedule = courtSchedules[court];
+        const openTimes = schedule.map(timeRange => {
+            const [start, end] = timeRange.split('-');
+            return `${start}-${end}`;
+        });
+
+        const scheduleText = `${court} Open From: ${openTimes.join(', ')}`;
+        schedulesElement.innerHTML += `<p>${scheduleText}</p>`;
+    });
+}
 
         // Call the functions initially
         updateCourtAvailability();
