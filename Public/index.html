@@ -467,7 +467,7 @@ toggleCheckInButton.addEventListener("click", () => {
 
                     socket.emit('checkIn', { latitude: userLatitude, longitude: userLongitude });
                 } else {
-                    alert("You are not at Rams. Check-In not allowed");
+                    alert("You are not at Woolen. Check-In not allowed");
                     checkedIn = false
                 }
             }, (error) => {
