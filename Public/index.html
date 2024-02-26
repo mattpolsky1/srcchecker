@@ -2,15 +2,14 @@
 <html>
 <head>
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-L45Z9JYDS2"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-L45Z9JYDS2');
-</script>
-    <title>Gym Attendance</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L45Z9JYDS2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-L45Z9JYDS2');
+    </script>
+    <title>Hoopers at Woolen</title>
     <style>
         body {
             font-family: 'Gotham Bold', Arial, sans-serif;
@@ -30,6 +29,13 @@
             font-size: 72px; /* Larger font size */
             font-weight: bold;
             color: #295296;
+        }
+
+        #courtsAvailable {
+            font-size: 36px; /* Adjust font size as needed */
+            font-weight: bold;
+            color: #295296;
+            margin-top: 20px;
         }
 
         #peopleAtGym {
@@ -119,22 +125,131 @@
                 font-size: 30px; /* Adjusted font size */
             }
         }
+
+        /* Additional styles for court schedules */
+        #courtSchedules {
+            text-align: left;
+            margin-top: 20px;
+            padding: 10px; /* Add padding for better visibility */
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.9); /* Add a semi-transparent white background */
+            border-radius: 5px; /* Add rounded corners */
+        }
+
+        #courtSchedules h3 {
+            font-size: 24px;
+            color: #295296;
+            margin-bottom: 10px;
+        }
+
+        #courtSchedules p {
+            font-size: 18px;
+            color: #5b5857;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
-<h1>People at the Gym: <span id="peopleAtGym">0</span></h1>
-<div id="status">Status: <span id="statusLabel">Checked Out</span></div>
-<div id="gymStatus">Gym Status: <span id="gymStatusLabel">Good Runs</span></div>
-<button id="toggleCheckInButton" class="checkIn">Check In</button>
-<div id="logo">
-    <img id="myImage" src="https://i.ibb.co/gPhHQ7f/campushoopslogo-02.png" alt="campushoopslogo-02">
-</div>
+    <h1>Pickup Numbers at Woolen: <span id="peopleAtGym">0</span></h1>
+    <div id="status">Status: <span id="statusLabel">Checked Out</span></div>
+    <div id="gymStatus">Gym Status: <span id="gymStatusLabel">Good Runs</span></div>
+    <button id="toggleCheckInButton" class="checkIn">Check In</button>
+    <div id="courtsAvailable">Courts available: <span id="courtsStatusLabel">0</span></div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry&callback=initMap"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
-<script src="/socket.io/socket.io.js"></script>
-<script>
+    <!-- Display availability status for each court -->
+    <div id="courtSchedules"></div>
 
+    <div id="logo">
+        <img id="myImage" src="https://i.ibb.co/gPhHQ7f/campushoopslogo-02.png" alt="campushoopslogo-02">
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrWbBamD1cA1NL9Q3Mt1Izml4WwZlzncs&libraries=geometry&callback=initMap"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+const courtSchedules = {
+            court1: ["4-5", "10-11"],
+            court2: ["4-5", "10-11"],
+            court3: ["4-5", "10-11"],
+            court4: ["4-5", "10-11"],
+            court5: ["4-11"],
+            court6: ["4-11"]
+        };
+
+        // Create court div elements dynamically
+        Object.keys(courtSchedules).forEach(court => {
+            const courtDiv = document.createElement('div');
+            courtDiv.id = `court${court}`;
+            document.getElementById('courtSchedules').appendChild(courtDiv);
+        });
+
+        // Function to update court availability status
+// Function to update court availability status
+function updateCourtAvailability() {
+    const currentTime = new Date();
+    let currentHour = currentTime.getHours();
+    const ampm = currentHour >= 12 ? 'pm' : 'am';
+
+    // Convert to 12-hour format
+    currentHour = currentHour % 12 || 12;
+
+    let courtsOpen = 0;
+
+    // Display availability status for each court
+    Object.keys(courtSchedules).forEach(court => {
+        const schedule = courtSchedules[court];
+        const isOpen = schedule.some(timeRange => {
+            const [start, end] = timeRange.split('-').map(Number);
+            return currentHour >= start && currentHour < end;
+        });
+
+        // Update availability status for each court
+        const courtElement = document.getElementById(`court${court}`);
+        courtElement.innerText = `${court}: ${isOpen ? 'Open' : 'Closed'}`;
+
+        if (isOpen) {
+            courtsOpen++;
+        }
+    });
+
+    // Log current hour and status of each court to console for debugging
+    console.log(`Current Hour: ${currentHour} ${ampm}`);
+    console.log('Court Status:', courtSchedules);
+    console.log('Courts Open:', courtsOpen);
+
+    // Update total courts available
+    document.getElementById('courtsStatusLabel').innerText = courtsOpen;
+}
+
+        // Display court schedules in the top left
+        function displayCourtSchedules() {
+    const schedulesElement = document.getElementById('courtSchedules');
+    schedulesElement.innerHTML = "<h3>Court Schedules:</h3>";
+
+    Object.keys(courtSchedules).forEach(court => {
+        const courtNumber = court.charAt(court.length - 1); // Extract the court number
+        const schedule = courtSchedules[court];
+        const openTimes = schedule.map(timeRange => {
+            const [start, end] = timeRange.split('-');
+            return `${start}-${end}`;
+        });
+
+        const scheduleText = `Court ${courtNumber} Open From: ${openTimes.join(', ')}`;
+        schedulesElement.innerHTML += `<p>${scheduleText}</p>`;
+    });
+}
+
+        // Call the functions initially
+        updateCourtAvailability();
+        displayCourtSchedules();
+
+        // Update every minute
+        setInterval(() => {
+            updateCourtAvailability();
+            displayCourtSchedules();
+        }, 60000);
 
 let isRefreshing = false;
 
